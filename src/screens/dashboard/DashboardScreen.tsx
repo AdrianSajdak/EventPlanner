@@ -1,0 +1,230 @@
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+} from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Colors } from '../../theme/colors';
+import { Fonts, FontSizes } from '../../theme/typography';
+import { Navbar } from '../../components/common/Navbar';
+import { EventCard, EventCardData } from '../../components/common/EventCard';
+import { EventsStackParamList } from '../../navigation/EventsNavigator';
+
+type Props = {
+  navigation: NativeStackNavigationProp<EventsStackParamList, 'Dashboard'>;
+};
+
+const MOCK_PENDING: EventCardData[] = [
+  {
+    id: '1',
+    title: 'Wieczór z Planszówkami',
+    date: '12 Paź, 19:00',
+    location: 'Cybermachina',
+    organizer: { name: 'Marek Kowalski' },
+  },
+];
+
+const MOCK_ACCEPTED: EventCardData[] = [
+  {
+    id: '2',
+    title: 'Wieczór z Planszówkami',
+    date: '12 Paź, 19:00',
+    location: 'Cybermachina',
+    organizer: { name: 'Marek Kowalski' },
+    participants: [{}, {}],
+    totalParticipants: 7,
+  },
+  {
+    id: '3',
+    title: 'Kino Letnie',
+    date: '14 Paź, 20:00',
+    location: 'Planty Park',
+    organizer: { name: 'Anna Nowak' },
+    participants: [{}, {}],
+    totalParticipants: 5,
+  },
+];
+
+const MOCK_HOSTED: EventCardData[] = [
+  {
+    id: '4',
+    title: 'Wieczór z Planszówkami',
+    date: '12 Paź, 19:00',
+    location: 'Cybermachina',
+    organizer: { name: '' },
+    participants: [{}, {}],
+    totalParticipants: 7,
+  },
+  {
+    id: '5',
+    title: 'BBQ w ogrodzie',
+    date: '18 Paź, 15:00',
+    location: 'Ogród Botaniczny',
+    organizer: { name: '' },
+    participants: [{}, {}],
+    totalParticipants: 4,
+  },
+];
+
+const SectionTitle: React.FC<{ label: string }> = ({ label }) => (
+  <View style={styles.sectionTitle}>
+    <Text style={styles.sectionArrow}>▼</Text>
+    <Text style={styles.sectionText}>{label}</Text>
+  </View>
+);
+
+export default function DashboardScreen({ navigation }: Props) {
+  return (
+    <SafeAreaView style={styles.safe}>
+      <Navbar
+        title="Planner Wspólnych Wydarzeń"
+        onMenu={() => {}}
+      />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.weekSummary}>
+          <Text style={styles.weekTitle}>
+            W tym tygodniu zaplanowano 5 wydarzeń z Twoim udziałem!
+          </Text>
+          <Text style={styles.weekSubtitle}>
+            2 Twoje, 2 zaakceptowano i 1 oczekujące
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <SectionTitle label="WYDARZENIA DO AKCEPTACJI (1):" />
+          {MOCK_PENDING.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              variant="pending"
+              onAccept={() => {}}
+              onReject={() => {}}
+            />
+          ))}
+        </View>
+
+        <View style={styles.section}>
+          <SectionTitle label="ZAAKCEPTOWANE WYDARZENIA (2):" />
+          {MOCK_ACCEPTED.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              variant="accepted"
+              onDetails={() => navigation.navigate('EventDetails', { eventId: event.id, isOrganizer: false })}
+            />
+          ))}
+        </View>
+
+        <View style={styles.section}>
+          <SectionTitle label="ORGANIZOWANE PRZEZ CIEBIE (2):" />
+          {MOCK_HOSTED.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              variant="hosted"
+              onDetails={() => navigation.navigate('EventDetailsOrganizer', { eventId: event.id })}
+              onEdit={() => navigation.navigate('EventEditor', { eventId: event.id })}
+            />
+          ))}
+        </View>
+
+        <View style={styles.bottomPadding} />
+      </ScrollView>
+
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => navigation.navigate('NewEvent')}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.fabIcon}>+</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.lightModeMainTheme,
+  },
+  scroll: {
+    flex: 1,
+    backgroundColor: Colors.lightModeMainTheme,
+  },
+  content: {
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    gap: 24,
+  },
+  weekSummary: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    gap: 4,
+  },
+  weekTitle: {
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.lg,
+    color: Colors.black,
+    lineHeight: 28,
+  },
+  weekSubtitle: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.base,
+    color: Colors.mainGraySecondary,
+    lineHeight: 20,
+  },
+  section: {
+    gap: 12,
+    paddingBottom: 10,
+  },
+  sectionTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+  },
+  sectionArrow: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.base,
+    color: Colors.actualMainBlue,
+  },
+  sectionText: {
+    fontFamily: Fonts.bold,
+    fontSize: 15,
+    color: Colors.actualMainBlue,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 76,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+    backgroundColor: Colors.purpleAccent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: Colors.graySecondary,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  fabIcon: {
+    color: Colors.white,
+    fontSize: 28,
+    fontFamily: Fonts.bold,
+    lineHeight: 32,
+  },
+  bottomPadding: { height: 80 },
+});
