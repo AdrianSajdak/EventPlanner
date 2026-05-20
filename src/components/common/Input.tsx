@@ -73,6 +73,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.secondaryDarkBlue,
     borderRadius: 8,
     overflow: 'hidden',
+    minHeight: 52,
   },
   input: {
     flex: 1,
@@ -92,6 +93,9 @@ const styles = StyleSheet.create({
   },
   rightIcon: {
     paddingHorizontal: 16,
+    minWidth: 56,
+    alignItems: 'center', 
+    justifyContent: 'center', 
   },
   eyeIcon: {
     fontSize: 16,
