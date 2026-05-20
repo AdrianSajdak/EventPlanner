@@ -83,19 +83,8 @@ export default function LoginScreen({ navigation }: Props) {
               <View style={styles.footer}>
                 <View style={styles.dividerRow}>
                   <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>Lub dołącz przez</Text>
+                  <Text style={styles.dividerText}>Lub dołącz do nas</Text>
                   <View style={styles.dividerLine} />
-                </View>
-
-                <View style={styles.socialMargin}>
-                  <View style={styles.socialRow}>
-                    <TouchableOpacity style={styles.socialBtn} activeOpacity={0.8}>
-                      <Text style={styles.socialBtnText}>Google</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.socialBtn} activeOpacity={0.8}>
-                      <Text style={styles.socialBtnText}>Facebook</Text>
-                    </TouchableOpacity>
-                  </View>
                 </View>
 
                 <View style={styles.registerMargin}>
