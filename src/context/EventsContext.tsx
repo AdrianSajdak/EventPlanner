@@ -21,6 +21,7 @@ interface EventsContextValue {
   getEvent: (id: string) => EventDetails;
   updateEvent: (id: string, patch: Partial<EventDetails>) => void;
   cancelEvent: (id: string) => void;
+  inviteToEvent: (id: string, friendIds: string[]) => void;
 }
 
 const EventsContext = createContext<EventsContextValue | null>(null);
@@ -92,6 +93,25 @@ export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   }, []);
 
+  const inviteToEvent = useCallback((id: string, friendIds: string[]) => {
+    setEventsById((prev) => {
+      const existing = prev[id];
+      if (!existing) return prev;
+      const alreadyInvited = existing.invitedFriendIds ?? [];
+      const newlyInvited = friendIds.filter((fid) => !alreadyInvited.includes(fid));
+      if (newlyInvited.length === 0) return prev;
+      return {
+        ...prev,
+        [id]: {
+          ...existing,
+          invitedFriendIds: [...alreadyInvited, ...newlyInvited],
+          participantsTotal: existing.participantsTotal + newlyInvited.length,
+          participantsPending: existing.participantsPending + newlyInvited.length,
+        },
+      };
+    });
+  }, []);
+
   const cancelEvent = useCallback((id: string) => {
     setHostedIds((prev) => prev.filter((x) => x !== id));
     setEventsById((prev) => {
@@ -107,8 +127,8 @@ export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   );
 
   const value = useMemo(
-    () => ({ hosted, addHostedEvent, getEvent, updateEvent, cancelEvent }),
-    [hosted, addHostedEvent, getEvent, updateEvent, cancelEvent]
+    () => ({ hosted, addHostedEvent, getEvent, updateEvent, cancelEvent, inviteToEvent }),
+    [hosted, addHostedEvent, getEvent, updateEvent, cancelEvent, inviteToEvent]
   );
 
   return <EventsContext.Provider value={value}>{children}</EventsContext.Provider>;

@@ -20,6 +20,7 @@ export interface EventDetails {
   participantsRejected: number;
   voteTitle: string;
   voteOptions: EventVoteOption[];
+  invitedFriendIds?: string[];
 }
 
 const BASE_EVENT: Omit<EventDetails, 'id'> = {
