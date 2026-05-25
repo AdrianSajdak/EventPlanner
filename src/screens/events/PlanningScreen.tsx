@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView,
 } from 'react-native';
@@ -8,65 +8,17 @@ import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
+import { useEvents } from '../../context/EventsContext';
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'Planning'>;
   route: RouteProp<EventsStackParamList, 'Planning'>;
 };
 
-interface PollOption {
-  label: string;
-  votes: number;
-  totalVotes: number;
-  voted: boolean;
-}
-
-interface Poll {
-  id: string;
-  title: string;
-  status: 'active' | 'closed';
-  options: PollOption[];
-}
-
-const MOCK_POLLS: Poll[] = [
-  {
-    id: '1',
-    title: 'Głosowanie: Godzina startu',
-    status: 'active',
-    options: [
-      { label: '18:00', votes: 4, totalVotes: 5, voted: true },
-      { label: '19:00', votes: 1, totalVotes: 5, voted: false },
-    ],
-  },
-  {
-    id: '2',
-    title: 'Głosowanie: Miejsce spotkania',
-    status: 'active',
-    options: [
-      { label: 'Cybermachina', votes: 3, totalVotes: 5, voted: false },
-      { label: 'Dom Marka', votes: 2, totalVotes: 5, voted: false },
-    ],
-  },
-];
-
 export default function PlanningScreen({ navigation, route }: Props) {
-  const [polls, setPolls] = useState<Poll[]>(MOCK_POLLS);
   const { eventId } = route.params;
-
-  const vote = (pollId: string, optionLabel: string) => {
-    setPolls((prev) =>
-      prev.map((poll) => {
-        if (poll.id !== pollId) return poll;
-        return {
-          ...poll,
-          options: poll.options.map((opt) => ({
-            ...opt,
-            voted: opt.label === optionLabel,
-          })),
-        };
-      })
-    );
-  };
+  const { getPolls, voteOnPoll } = useEvents();
+  const polls = getPolls(eventId);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -92,33 +44,39 @@ export default function PlanningScreen({ navigation, route }: Props) {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {polls.map((poll) => (
-          <View key={poll.id} style={styles.pollCard}>
-            <View style={styles.pollHeader}>
-              <Text style={styles.pollTitle}>{poll.title}</Text>
-              <View style={[styles.statusBadge, poll.status === 'active' && styles.activeBadge]}>
-                <Text style={[styles.statusText, poll.status === 'active' && styles.activeText]}>
-                  {poll.status === 'active' ? 'AKTYWNE' : 'ZAKOŃCZONE'}
-                </Text>
+        {polls.map((poll) => {
+          const totalVotes = poll.options.reduce((sum, o) => sum + o.votes, 0);
+          return (
+            <View key={poll.id} style={styles.pollCard}>
+              <View style={styles.pollHeader}>
+                <Text style={styles.pollTitle}>{poll.title}</Text>
+                <View style={[styles.statusBadge, poll.status === 'active' && styles.activeBadge]}>
+                  <Text style={[styles.statusText, poll.status === 'active' && styles.activeText]}>
+                    {poll.status === 'active' ? 'AKTYWNE' : 'ZAKOŃCZONE'}
+                  </Text>
+                </View>
               </View>
+              {poll.options.map((option) => {
+                const pct = totalVotes > 0 ? Math.round((option.votes / totalVotes) * 100) : 0;
+                return (
+                  <TouchableOpacity
+                    key={option.label}
+                    style={[styles.voteOption, option.voted && styles.voteOptionVoted]}
+                    onPress={() => voteOnPoll(eventId, poll.id, option.label)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.voteBar, { width: `${pct}%` as any }]} />
+                    <Text style={styles.voteLabel}>{option.label}</Text>
+                    <Text style={styles.votePct}>{pct}%</Text>
+                  </TouchableOpacity>
+                );
+              })}
+              <Text style={styles.voteFooter}>
+                Oddanych głosów: {totalVotes}
+              </Text>
             </View>
-            {poll.options.map((option) => {
-              const pct = Math.round((option.votes / option.totalVotes) * 100);
-              return (
-                <TouchableOpacity
-                  key={option.label}
-                  style={[styles.voteOption, option.voted && styles.voteOptionVoted]}
-                  onPress={() => vote(poll.id, option.label)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.voteBar, { width: `${pct}%` as any }]} />
-                  <Text style={styles.voteLabel}>{option.label}</Text>
-                  <Text style={styles.votePct}>{pct}%</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        ))}
+          );
+        })}
 
         <TouchableOpacity
           style={styles.counterProposalBtn}
@@ -246,5 +204,12 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.md,
     color: Colors.actualMainBlue,
+  },
+  voteFooter: {
+    fontFamily: Fonts.regular,
+    fontSize: 11,
+    color: Colors.mainGraySecondary,
+    textAlign: 'right',
+    marginTop: 2,
   },
 });

@@ -2,7 +2,9 @@ import React, { createContext, useCallback, useContext, useMemo, useState } from
 import { EventCardData } from '../components/common/EventCard';
 import {
   EventDetails,
+  MOCK_ACCEPTED_CARDS,
   MOCK_EVENTS,
+  MOCK_HISTORICAL_EVENTS,
   MOCK_HOSTED_CARDS,
 } from '../data/mockEvents';
 
@@ -15,13 +17,32 @@ export interface NewHostedEventInput {
   participantsCount: number;
 }
 
+export interface PollOption {
+  label: string;
+  votes: number;
+  voted: boolean;
+}
+
+export interface Poll {
+  id: string;
+  title: string;
+  status: 'active' | 'closed';
+  options: PollOption[];
+}
+
 interface EventsContextValue {
   hosted: EventCardData[];
+  accepted: EventCardData[];
   addHostedEvent: (input: NewHostedEventInput) => EventDetails;
   getEvent: (id: string) => EventDetails;
   updateEvent: (id: string, patch: Partial<EventDetails>) => void;
   cancelEvent: (id: string) => void;
   inviteToEvent: (id: string, friendIds: string[]) => void;
+  acceptInvite: (card: EventCardData) => void;
+  leaveEvent: (id: string) => void;
+  getPolls: (eventId: string) => Poll[];
+  voteOnPoll: (eventId: string, pollId: string, optionLabel: string) => void;
+  addPoll: (eventId: string, title: string, optionLabels: string[]) => Poll;
 }
 
 const EventsContext = createContext<EventsContextValue | null>(null);
@@ -43,7 +64,7 @@ const toCardData = (event: EventDetails, organizerName: string): EventCardData =
 
 const initialEventsById = (): Record<string, EventDetails> => {
   const map: Record<string, EventDetails> = {};
-  MOCK_EVENTS.forEach((e) => {
+  [...MOCK_EVENTS, ...MOCK_HISTORICAL_EVENTS].forEach((e) => {
     map[e.id] = e;
   });
   return map;
@@ -51,9 +72,89 @@ const initialEventsById = (): Record<string, EventDetails> => {
 
 const INITIAL_HOSTED_IDS = MOCK_HOSTED_CARDS.map((c) => c.id);
 
+const DEFAULT_POLLS: Poll[] = [
+  {
+    id: 'poll-time',
+    title: 'Głosowanie: Godzina startu',
+    status: 'active',
+    options: [
+      { label: '18:00', votes: 4, voted: true },
+      { label: '19:00', votes: 1, voted: false },
+    ],
+  },
+  {
+    id: 'poll-place',
+    title: 'Głosowanie: Miejsce spotkania',
+    status: 'active',
+    options: [
+      { label: 'Cybermachina', votes: 3, voted: false },
+      { label: 'Dom Marka', votes: 2, voted: false },
+    ],
+  },
+];
+
+const clonePolls = (polls: Poll[]): Poll[] =>
+  polls.map((p) => ({ ...p, options: p.options.map((o) => ({ ...o })) }));
+
 export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [eventsById, setEventsById] = useState<Record<string, EventDetails>>(initialEventsById);
   const [hostedIds, setHostedIds] = useState<string[]>(INITIAL_HOSTED_IDS);
+  const [accepted, setAccepted] = useState<EventCardData[]>(MOCK_ACCEPTED_CARDS);
+  const [pollsByEventId, setPollsByEventId] = useState<Record<string, Poll[]>>({});
+
+  const getPolls = useCallback(
+    (eventId: string): Poll[] => pollsByEventId[eventId] ?? DEFAULT_POLLS,
+    [pollsByEventId]
+  );
+
+  const ensurePolls = (prev: Record<string, Poll[]>, eventId: string): Poll[] =>
+    prev[eventId] ?? clonePolls(DEFAULT_POLLS);
+
+  const voteOnPoll = useCallback((eventId: string, pollId: string, optionLabel: string) => {
+    setPollsByEventId((prev) => {
+      const base = ensurePolls(prev, eventId);
+      const next = base.map((poll) => {
+        if (poll.id !== pollId) return poll;
+        return {
+          ...poll,
+          options: poll.options.map((opt) => {
+            const wasVoted = opt.voted;
+            const willBeVoted = opt.label === optionLabel;
+            let votes = opt.votes;
+            if (wasVoted && !willBeVoted) votes -= 1;
+            if (!wasVoted && willBeVoted) votes += 1;
+            return { ...opt, votes: Math.max(votes, 0), voted: willBeVoted };
+          }),
+        };
+      });
+      return { ...prev, [eventId]: next };
+    });
+  }, []);
+
+  const addPoll = useCallback(
+    (eventId: string, title: string, optionLabels: string[]): Poll => {
+      const newPoll: Poll = {
+        id: `poll-${Date.now()}`,
+        title,
+        status: 'active',
+        options: optionLabels.map((label) => ({ label, votes: 0, voted: false })),
+      };
+      setPollsByEventId((prev) => {
+        const base = ensurePolls(prev, eventId);
+        return { ...prev, [eventId]: [...base, newPoll] };
+      });
+      return newPoll;
+    },
+    []
+  );
+
+  const acceptInvite = useCallback((card: EventCardData) => {
+    setAccepted((prev) => (prev.some((e) => e.id === card.id) ? prev : [...prev, card]));
+  }, []);
+
+  const leaveEvent = useCallback((id: string) => {
+    setAccepted((prev) => prev.filter((e) => e.id !== id));
+  }, []);
 
   const addHostedEvent = useCallback((input: NewHostedEventInput): EventDetails => {
     const id = `hosted-${Date.now()}`;
@@ -127,8 +228,34 @@ export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   );
 
   const value = useMemo(
-    () => ({ hosted, addHostedEvent, getEvent, updateEvent, cancelEvent, inviteToEvent }),
-    [hosted, addHostedEvent, getEvent, updateEvent, cancelEvent, inviteToEvent]
+    () => ({
+      hosted,
+      accepted,
+      addHostedEvent,
+      getEvent,
+      updateEvent,
+      cancelEvent,
+      inviteToEvent,
+      acceptInvite,
+      leaveEvent,
+      getPolls,
+      voteOnPoll,
+      addPoll,
+    }),
+    [
+      hosted,
+      accepted,
+      addHostedEvent,
+      getEvent,
+      updateEvent,
+      cancelEvent,
+      inviteToEvent,
+      acceptInvite,
+      leaveEvent,
+      getPolls,
+      voteOnPoll,
+      addPoll,
+    ]
   );
 
   return <EventsContext.Provider value={value}>{children}</EventsContext.Provider>;

@@ -13,10 +13,7 @@ import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { EventCard, EventCardData } from '../../components/common/EventCard';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
-import {
-  MOCK_PENDING_CARDS,
-  MOCK_ACCEPTED_CARDS,
-} from '../../data/mockEvents';
+import { MOCK_PENDING_CARDS } from '../../data/mockEvents';
 import { useEvents } from '../../context/EventsContext';
 
 type Props = {
@@ -56,8 +53,7 @@ export default function DashboardScreen({ navigation }: Props) {
   });
 
   const [pending, setPending] = useState<EventCardData[]>(MOCK_PENDING_CARDS);
-  const [accepted, setAccepted] = useState<EventCardData[]>(MOCK_ACCEPTED_CARDS);
-  const { hosted } = useEvents();
+  const { hosted, accepted, acceptInvite } = useEvents();
 
   const toggle = (key: SectionKey) =>
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -66,7 +62,7 @@ export default function DashboardScreen({ navigation }: Props) {
     const event = pending.find((e) => e.id === eventId);
     if (!event) return;
     setPending((prev) => prev.filter((e) => e.id !== eventId));
-    setAccepted((prev) => [...prev, toAcceptedCard(event)]);
+    acceptInvite(toAcceptedCard(event));
   };
 
   const handleReject = (eventId: string) => {
