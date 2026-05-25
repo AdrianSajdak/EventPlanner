@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -70,14 +70,35 @@ const MOCK_HOSTED: EventCardData[] = [
   },
 ];
 
-const SectionTitle: React.FC<{ label: string }> = ({ label }) => (
-  <View style={styles.sectionTitle}>
-    <Text style={styles.sectionArrow}>▼</Text>
+type SectionTitleProps = {
+  label: string;
+  collapsed: boolean;
+  onToggle: () => void;
+};
+
+const SectionTitle: React.FC<SectionTitleProps> = ({ label, collapsed, onToggle }) => (
+  <TouchableOpacity
+    style={styles.sectionTitle}
+    onPress={onToggle}
+    activeOpacity={0.7}
+  >
+    <Text style={styles.sectionArrow}>{collapsed ? '▶' : '▼'}</Text>
     <Text style={styles.sectionText}>{label}</Text>
-  </View>
+  </TouchableOpacity>
 );
 
+type SectionKey = 'pending' | 'accepted' | 'hosted';
+
 export default function DashboardScreen({ navigation }: Props) {
+  const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>({
+    pending: false,
+    accepted: false,
+    hosted: false,
+  });
+
+  const toggle = (key: SectionKey) =>
+    setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
+
   return (
     <SafeAreaView style={styles.safe}>
       <Navbar title="Planner Wspólnych Wydarzeń" />
@@ -96,41 +117,56 @@ export default function DashboardScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.section}>
-          <SectionTitle label="WYDARZENIA DO AKCEPTACJI (1):" />
-          {MOCK_PENDING.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              variant="pending"
-              onAccept={() => {}}
-              onReject={() => {}}
-            />
-          ))}
+          <SectionTitle
+            label="WYDARZENIA DO AKCEPTACJI (1):"
+            collapsed={collapsed.pending}
+            onToggle={() => toggle('pending')}
+          />
+          {!collapsed.pending &&
+            MOCK_PENDING.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                variant="pending"
+                onAccept={() => {}}
+                onReject={() => {}}
+              />
+            ))}
         </View>
 
         <View style={styles.section}>
-          <SectionTitle label="ZAAKCEPTOWANE WYDARZENIA (2):" />
-          {MOCK_ACCEPTED.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              variant="accepted"
-              onDetails={() => navigation.navigate('EventDetails', { eventId: event.id, isOrganizer: false })}
-            />
-          ))}
+          <SectionTitle
+            label="ZAAKCEPTOWANE WYDARZENIA (2):"
+            collapsed={collapsed.accepted}
+            onToggle={() => toggle('accepted')}
+          />
+          {!collapsed.accepted &&
+            MOCK_ACCEPTED.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                variant="accepted"
+                onDetails={() => navigation.navigate('EventDetails', { eventId: event.id, isOrganizer: false })}
+              />
+            ))}
         </View>
 
         <View style={styles.section}>
-          <SectionTitle label="ORGANIZOWANE PRZEZ CIEBIE (2):" />
-          {MOCK_HOSTED.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              variant="hosted"
-              onDetails={() => navigation.navigate('EventDetailsOrganizer', { eventId: event.id })}
-              onEdit={() => navigation.navigate('EventEditor', { eventId: event.id })}
-            />
-          ))}
+          <SectionTitle
+            label="ORGANIZOWANE PRZEZ CIEBIE (2):"
+            collapsed={collapsed.hosted}
+            onToggle={() => toggle('hosted')}
+          />
+          {!collapsed.hosted &&
+            MOCK_HOSTED.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                variant="hosted"
+                onDetails={() => navigation.navigate('EventDetailsOrganizer', { eventId: event.id })}
+                onEdit={() => navigation.navigate('EventEditor', { eventId: event.id })}
+              />
+            ))}
         </View>
 
         <View style={styles.bottomPadding} />
