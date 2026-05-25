@@ -16,8 +16,8 @@ import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import {
   MOCK_PENDING_CARDS,
   MOCK_ACCEPTED_CARDS,
-  MOCK_HOSTED_CARDS,
 } from '../../data/mockEvents';
+import { useEvents } from '../../context/EventsContext';
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'Dashboard'>;
@@ -57,6 +57,7 @@ export default function DashboardScreen({ navigation }: Props) {
 
   const [pending, setPending] = useState<EventCardData[]>(MOCK_PENDING_CARDS);
   const [accepted, setAccepted] = useState<EventCardData[]>(MOCK_ACCEPTED_CARDS);
+  const { hosted } = useEvents();
 
   const toggle = (key: SectionKey) =>
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -126,12 +127,12 @@ export default function DashboardScreen({ navigation }: Props) {
 
         <View style={styles.section}>
           <SectionTitle
-            label={`ORGANIZOWANE PRZEZ CIEBIE (${MOCK_HOSTED_CARDS.length}):`}
+            label={`ORGANIZOWANE PRZEZ CIEBIE (${hosted.length}):`}
             collapsed={collapsed.hosted}
             onToggle={() => toggle('hosted')}
           />
           {!collapsed.hosted &&
-            MOCK_HOSTED_CARDS.map((event) => (
+            hosted.map((event) => (
               <EventCard
                 key={event.id}
                 event={event}

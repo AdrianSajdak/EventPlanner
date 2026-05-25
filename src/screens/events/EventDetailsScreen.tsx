@@ -9,7 +9,8 @@ import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
-import { EventDetails, getMockEvent } from '../../data/mockEvents';
+import { EventDetails } from '../../data/mockEvents';
+import { useEvents } from '../../context/EventsContext';
 
 type Tab = 'info' | 'planning' | 'chat';
 
@@ -102,7 +103,8 @@ const InfoTab = ({ event }: { event: EventDetails }) => {
 export default function EventDetailsScreen({ navigation, route }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('info');
   const { eventId } = route.params;
-  const event = getMockEvent(eventId);
+  const { getEvent } = useEvents();
+  const event = getEvent(eventId);
 
   return (
     <SafeAreaView style={styles.safe}>

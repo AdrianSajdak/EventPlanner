@@ -9,6 +9,7 @@ import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { Button } from '../../components/common/Button';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
+import { useEvents } from '../../context/EventsContext';
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'CancelEvent'>;
@@ -23,9 +24,17 @@ const reasons = [
   'Inne',
 ];
 
-export default function CancelEventScreen({ navigation }: Props) {
+export default function CancelEventScreen({ navigation, route }: Props) {
+  const { eventId } = route.params;
+  const { getEvent, cancelEvent } = useEvents();
+  const event = getEvent(eventId);
   const [selectedReason, setSelectedReason] = useState('');
   const [confirmed, setConfirmed] = useState(false);
+
+  const handleCancel = () => {
+    cancelEvent(eventId);
+    navigation.popToTop();
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -40,7 +49,7 @@ export default function CancelEventScreen({ navigation }: Props) {
           <Text style={styles.warningTitle}>Odwołanie wydarzenia</Text>
           <Text style={styles.warningText}>
             Ta akcja jest nieodwracalna. Wszyscy uczestnicy zostaną powiadomieni o odwołaniu
-            wydarzenia "Wieczór z planszówkami".
+            wydarzenia "{event.title}".
           </Text>
         </View>
 
@@ -84,7 +93,7 @@ export default function CancelEventScreen({ navigation }: Props) {
           <Button
             label="Odwołaj wydarzenie"
             variant="primary"
-            onPress={() => navigation.navigate('Dashboard')}
+            onPress={handleCancel}
             disabled={!selectedReason || !confirmed}
             style={{ ...styles.actionBtn, ...styles.cancelBtn }}
           />

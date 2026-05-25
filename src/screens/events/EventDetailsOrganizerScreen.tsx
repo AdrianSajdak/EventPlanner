@@ -9,7 +9,7 @@ import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { Button } from '../../components/common/Button';
-import { getMockEvent } from '../../data/mockEvents';
+import { useEvents } from '../../context/EventsContext';
 
 type Tab = 'info' | 'planning' | 'chat';
 
@@ -21,7 +21,8 @@ type Props = {
 export default function EventDetailsOrganizerScreen({ navigation, route }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('info');
   const { eventId } = route.params;
-  const event = getMockEvent(eventId);
+  const { getEvent } = useEvents();
+  const event = getEvent(eventId);
 
   return (
     <SafeAreaView style={styles.safe}>

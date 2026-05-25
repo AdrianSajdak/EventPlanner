@@ -11,6 +11,7 @@ import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { INVITABLE_FRIENDS } from '../../data/mockFriends';
+import { useEvents } from '../../context/EventsContext';
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'NewEvent'>;
@@ -32,6 +33,7 @@ const StepIndicator = ({ current }: { current: Step }) => (
 );
 
 export default function NewEventScreen({ navigation }: Props) {
+  const { addHostedEvent } = useEvents();
   const [step, setStep] = useState<Step>(1);
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
@@ -75,6 +77,18 @@ export default function NewEventScreen({ navigation }: Props) {
 
   const removeParticipant = (id: string) =>
     setParticipantIds((prev) => prev.filter((x) => x !== id));
+
+  const handleCreate = () => {
+    addHostedEvent({
+      title,
+      date,
+      time,
+      location,
+      description,
+      participantsCount: participantIds.length,
+    });
+    navigation.goBack();
+  };
 
   return (
     <KeyboardAvoidingView
@@ -224,7 +238,7 @@ export default function NewEventScreen({ navigation }: Props) {
               <Button
                 label="Utwórz wydarzenie"
                 variant="primary"
-                onPress={() => navigation.goBack()}
+                onPress={handleCreate}
                 style={styles.navBtn}
               />
             )}
