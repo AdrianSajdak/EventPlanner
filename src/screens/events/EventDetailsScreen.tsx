@@ -9,6 +9,7 @@ import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
+import { EventDetails, getMockEvent } from '../../data/mockEvents';
 
 type Tab = 'info' | 'planning' | 'chat';
 
@@ -17,96 +18,98 @@ type Props = {
   route: RouteProp<EventsStackParamList, 'EventDetails'>;
 };
 
-const InfoTab = ({ navigation, eventId }: { navigation: any; eventId: string }) => (
-  <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.tabContent}>
-    <TouchableOpacity style={styles.resignButton} activeOpacity={0.8}>
-      <Text style={styles.resignText}>Zrezygnuj</Text>
-      <Text style={styles.resignArrow}> →</Text>
-    </TouchableOpacity>
+const InfoTab = ({ event }: { event: EventDetails }) => {
+  const remaining = Math.max(event.participantsTotal - 4, 0);
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.tabContent}>
+      <TouchableOpacity style={styles.resignButton} activeOpacity={0.8}>
+        <Text style={styles.resignText}>Zrezygnuj</Text>
+        <Text style={styles.resignArrow}> →</Text>
+      </TouchableOpacity>
 
-    <View style={styles.statCard}>
-      <Text style={styles.statIcon}>📅</Text>
-      <View style={styles.statInfo}>
-        <Text style={styles.statLabel}>Data i Godzina</Text>
-        <Text style={styles.statValue}>15 Paź, 18:30</Text>
-      </View>
-    </View>
-
-    <View style={styles.statCard}>
-      <Text style={styles.statIcon}>🛡️</Text>
-      <View style={styles.statInfo}>
-        <Text style={styles.statLabel}>Twoja Rola</Text>
-        <Text style={styles.statValue}>Uczestnik</Text>
-      </View>
-    </View>
-
-    <View style={styles.locationCard}>
-      <View style={styles.locationHeader}>
-        <View>
-          <Text style={styles.locationTitle}>Lokalizacja</Text>
-          <Text style={styles.locationAddress}>Cybermachina, ul. Mikołajska 11</Text>
-          <Text style={styles.locationCity}>Kraków, Polska</Text>
-        </View>
-        <TouchableOpacity style={styles.mapButton} activeOpacity={0.8}>
-          <Text>🗺️</Text>
-        </TouchableOpacity>
-      </View>
-      <View style={styles.mapPlaceholder}>
-        <Text style={styles.mapText}>📍</Text>
-      </View>
-    </View>
-
-    <View style={styles.votingCard}>
-      <View style={styles.votingHeader}>
-        <Text style={styles.votingTitle}>Głosowanie: Godzina startu</Text>
-        <View style={styles.activeBadge}>
-          <Text style={styles.activeBadgeText}>AKTYWNE</Text>
+      <View style={styles.statCard}>
+        <Text style={styles.statIcon}>📅</Text>
+        <View style={styles.statInfo}>
+          <Text style={styles.statLabel}>Data i Godzina</Text>
+          <Text style={styles.statValue}>{event.dateLabel}</Text>
         </View>
       </View>
-      <TouchableOpacity style={styles.voteOption} activeOpacity={0.8}>
-        <View style={[styles.voteBar, { width: '80%' }]} />
-        <Text style={styles.voteTime}>18:00</Text>
-        <Text style={styles.votePercent}>80%</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.voteOption} activeOpacity={0.8}>
-        <View style={[styles.voteBar, { width: '20%' }]} />
-        <Text style={styles.voteTime}>19:00</Text>
-        <Text style={styles.votePercent}>20%</Text>
-      </TouchableOpacity>
-    </View>
 
-    <View style={styles.participantsSection}>
-      <View style={styles.participantsHeader}>
-        <Text style={styles.participantsTitle}>Uczestnicy (8)</Text>
-        <TouchableOpacity>
-          <Text style={styles.seeAll}>Zobacz wszystkich</Text>
-        </TouchableOpacity>
+      <View style={styles.statCard}>
+        <Text style={styles.statIcon}>🛡️</Text>
+        <View style={styles.statInfo}>
+          <Text style={styles.statLabel}>Twoja Rola</Text>
+          <Text style={styles.statValue}>Uczestnik</Text>
+        </View>
       </View>
-      <View style={styles.avatarRow}>
-        {[0, 1, 2, 3].map((i) => (
-          <View key={i} style={[styles.participantAvatar, { marginLeft: i === 0 ? 0 : -12 }]}>
-            <View style={styles.avatarPlaceholder} />
+
+      <View style={styles.locationCard}>
+        <View style={styles.locationHeader}>
+          <View>
+            <Text style={styles.locationTitle}>Lokalizacja</Text>
+            <Text style={styles.locationAddress}>{event.locationStreet}</Text>
+            <Text style={styles.locationCity}>{event.locationCity}</Text>
           </View>
-        ))}
-        <View style={[styles.participantAvatar, styles.countAvatar, { marginLeft: -12 }]}>
-          <Text style={styles.countText}>+4</Text>
+          <TouchableOpacity style={styles.mapButton} activeOpacity={0.8}>
+            <Text>🗺️</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.mapPlaceholder}>
+          <Text style={styles.mapText}>📍</Text>
         </View>
       </View>
-    </View>
-  </ScrollView>
-);
+
+      <View style={styles.votingCard}>
+        <View style={styles.votingHeader}>
+          <Text style={styles.votingTitle}>{event.voteTitle}</Text>
+          <View style={styles.activeBadge}>
+            <Text style={styles.activeBadgeText}>AKTYWNE</Text>
+          </View>
+        </View>
+        {event.voteOptions.map((option) => (
+          <TouchableOpacity key={option.label} style={styles.voteOption} activeOpacity={0.8}>
+            <View style={[styles.voteBar, { width: `${option.percent}%` }]} />
+            <Text style={styles.voteTime}>{option.label}</Text>
+            <Text style={styles.votePercent}>{option.percent}%</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.participantsSection}>
+        <View style={styles.participantsHeader}>
+          <Text style={styles.participantsTitle}>Uczestnicy ({event.participantsTotal})</Text>
+          <TouchableOpacity>
+            <Text style={styles.seeAll}>Zobacz wszystkich</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.avatarRow}>
+          {[0, 1, 2, 3].map((i) => (
+            <View key={i} style={[styles.participantAvatar, { marginLeft: i === 0 ? 0 : -12 }]}>
+              <View style={styles.avatarPlaceholder} />
+            </View>
+          ))}
+          {remaining > 0 && (
+            <View style={[styles.participantAvatar, styles.countAvatar, { marginLeft: -12 }]}>
+              <Text style={styles.countText}>+{remaining}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    </ScrollView>
+  );
+};
 
 export default function EventDetailsScreen({ navigation, route }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('info');
   const { eventId } = route.params;
+  const event = getMockEvent(eventId);
 
   return (
     <SafeAreaView style={styles.safe}>
       <Navbar
-        title="Wieczór z planszówkami"
+        title={event.title}
         showBack
         onBack={() => navigation.goBack()}
-        onMenu={() => {}}
       />
 
       <View style={styles.tabBar}>
@@ -131,7 +134,7 @@ export default function EventDetailsScreen({ navigation, route }: Props) {
         ))}
       </View>
 
-      <InfoTab navigation={navigation} eventId={eventId} />
+      <InfoTab event={event} />
     </SafeAreaView>
   );
 }

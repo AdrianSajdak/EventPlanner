@@ -23,7 +23,7 @@ const StatBox = ({ label, value }: { label: string; value: string }) => (
 export default function UserProfileScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
-      <Navbar title="Profil" onMenu={() => navigation.navigate('Settings')} />
+      <Navbar title="Profil" />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.profileHeader}>
           <View style={styles.avatarLarge}>
