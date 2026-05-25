@@ -54,10 +54,7 @@ export default function FriendsScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <Navbar
-        title="Znajomi"
-        onMenu={() => {}}
-      />
+      <Navbar title="Znajomi" />
 
       <View style={styles.searchContainer}>
         <TextInput

@@ -75,7 +75,7 @@ const typeColor: Record<Notification['type'], string> = {
 export default function NotificationsScreen() {
   return (
     <SafeAreaView style={styles.safe}>
-      <Navbar title="Powiadomienia" onMenu={() => {}} />
+      <Navbar title="Powiadomienia" />
       <FlatList
         data={MOCK_NOTIFICATIONS}
         keyExtractor={(item) => item.id}

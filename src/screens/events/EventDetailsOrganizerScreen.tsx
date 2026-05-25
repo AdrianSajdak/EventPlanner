@@ -27,7 +27,6 @@ export default function EventDetailsOrganizerScreen({ navigation, route }: Props
         title="Wieczór z planszówkami"
         showBack
         onBack={() => navigation.goBack()}
-        onMenu={() => {}}
       />
 
       <View style={styles.tabBar}>

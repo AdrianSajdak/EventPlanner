@@ -33,7 +33,7 @@ const SettingsItem = ({
 export default function SettingsScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
-      <Navbar title="Ustawienia" showBack onBack={() => navigation.goBack()} />
+      <Navbar title="Ustawienia" showBack onBack={() => navigation.goBack()} showMenu={false} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Konto</Text>

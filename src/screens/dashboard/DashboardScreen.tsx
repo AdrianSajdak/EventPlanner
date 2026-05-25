@@ -80,10 +80,7 @@ const SectionTitle: React.FC<{ label: string }> = ({ label }) => (
 export default function DashboardScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
-      <Navbar
-        title="Planner Wspólnych Wydarzeń"
-        onMenu={() => {}}
-      />
+      <Navbar title="Planner Wspólnych Wydarzeń" />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
