@@ -11,7 +11,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
-import { EventCard } from '../../components/common/EventCard';
+import { EventCard, EventCardData } from '../../components/common/EventCard';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import {
   MOCK_PENDING_CARDS,
@@ -42,6 +42,12 @@ const SectionTitle: React.FC<SectionTitleProps> = ({ label, collapsed, onToggle 
 
 type SectionKey = 'pending' | 'accepted' | 'hosted';
 
+const toAcceptedCard = (event: EventCardData): EventCardData => ({
+  ...event,
+  participants: event.participants ?? [{}, {}],
+  totalParticipants: event.totalParticipants ?? 7,
+});
+
 export default function DashboardScreen({ navigation }: Props) {
   const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>({
     pending: false,
@@ -49,8 +55,22 @@ export default function DashboardScreen({ navigation }: Props) {
     hosted: false,
   });
 
+  const [pending, setPending] = useState<EventCardData[]>(MOCK_PENDING_CARDS);
+  const [accepted, setAccepted] = useState<EventCardData[]>(MOCK_ACCEPTED_CARDS);
+
   const toggle = (key: SectionKey) =>
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const handleAccept = (eventId: string) => {
+    const event = pending.find((e) => e.id === eventId);
+    if (!event) return;
+    setPending((prev) => prev.filter((e) => e.id !== eventId));
+    setAccepted((prev) => [...prev, toAcceptedCard(event)]);
+  };
+
+  const handleReject = (eventId: string) => {
+    setPending((prev) => prev.filter((e) => e.id !== eventId));
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -71,30 +91,30 @@ export default function DashboardScreen({ navigation }: Props) {
 
         <View style={styles.section}>
           <SectionTitle
-            label="WYDARZENIA DO AKCEPTACJI (1):"
+            label={`WYDARZENIA DO AKCEPTACJI (${pending.length}):`}
             collapsed={collapsed.pending}
             onToggle={() => toggle('pending')}
           />
           {!collapsed.pending &&
-            MOCK_PENDING_CARDS.map((event) => (
+            pending.map((event) => (
               <EventCard
                 key={event.id}
                 event={event}
                 variant="pending"
-                onAccept={() => {}}
-                onReject={() => {}}
+                onAccept={() => handleAccept(event.id)}
+                onReject={() => handleReject(event.id)}
               />
             ))}
         </View>
 
         <View style={styles.section}>
           <SectionTitle
-            label="ZAAKCEPTOWANE WYDARZENIA (2):"
+            label={`ZAAKCEPTOWANE WYDARZENIA (${accepted.length}):`}
             collapsed={collapsed.accepted}
             onToggle={() => toggle('accepted')}
           />
           {!collapsed.accepted &&
-            MOCK_ACCEPTED_CARDS.map((event) => (
+            accepted.map((event) => (
               <EventCard
                 key={event.id}
                 event={event}
@@ -106,7 +126,7 @@ export default function DashboardScreen({ navigation }: Props) {
 
         <View style={styles.section}>
           <SectionTitle
-            label="ORGANIZOWANE PRZEZ CIEBIE (2):"
+            label={`ORGANIZOWANE PRZEZ CIEBIE (${MOCK_HOSTED_CARDS.length}):`}
             collapsed={collapsed.hosted}
             onToggle={() => toggle('hosted')}
           />
