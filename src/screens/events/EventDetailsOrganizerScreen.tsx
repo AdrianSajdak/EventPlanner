@@ -9,6 +9,7 @@ import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { Button } from '../../components/common/Button';
+import { getMockEvent } from '../../data/mockEvents';
 
 type Tab = 'info' | 'planning' | 'chat';
 
@@ -20,11 +21,12 @@ type Props = {
 export default function EventDetailsOrganizerScreen({ navigation, route }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('info');
   const { eventId } = route.params;
+  const event = getMockEvent(eventId);
 
   return (
     <SafeAreaView style={styles.safe}>
       <Navbar
-        title="Wieczór z planszówkami"
+        title={event.title}
         showBack
         onBack={() => navigation.goBack()}
       />
@@ -68,7 +70,7 @@ export default function EventDetailsOrganizerScreen({ navigation, route }: Props
           <Text style={styles.statIcon}>📅</Text>
           <View style={styles.statInfo}>
             <Text style={styles.statLabel}>Data i Godzina</Text>
-            <Text style={styles.statValue}>15 Paź, 18:30</Text>
+            <Text style={styles.statValue}>{event.dateLabel}</Text>
           </View>
         </View>
 
@@ -84,8 +86,8 @@ export default function EventDetailsOrganizerScreen({ navigation, route }: Props
           <View style={styles.locationHeader}>
             <View>
               <Text style={styles.locationTitle}>Lokalizacja</Text>
-              <Text style={styles.locationAddress}>Cybermachina, ul. Mikołajska 11</Text>
-              <Text style={styles.locationCity}>Kraków, Polska</Text>
+              <Text style={styles.locationAddress}>{event.locationStreet}</Text>
+              <Text style={styles.locationCity}>{event.locationCity}</Text>
             </View>
             <TouchableOpacity style={styles.mapButton}>
               <Text>🗺️</Text>
@@ -98,22 +100,22 @@ export default function EventDetailsOrganizerScreen({ navigation, route }: Props
 
         <View style={styles.participantsSection}>
           <View style={styles.participantsHeader}>
-            <Text style={styles.participantsTitle}>Uczestnicy (8)</Text>
+            <Text style={styles.participantsTitle}>Uczestnicy ({event.participantsTotal})</Text>
             <TouchableOpacity>
               <Text style={styles.seeAll}>Zaproś więcej</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.statusRow}>
             <View style={styles.statusItem}>
-              <Text style={styles.statusCount}>5</Text>
+              <Text style={styles.statusCount}>{event.participantsAccepted}</Text>
               <Text style={styles.statusLabel}>Zaakceptowało</Text>
             </View>
             <View style={styles.statusItem}>
-              <Text style={styles.statusCount}>2</Text>
+              <Text style={styles.statusCount}>{event.participantsPending}</Text>
               <Text style={styles.statusLabel}>Oczekujących</Text>
             </View>
             <View style={styles.statusItem}>
-              <Text style={styles.statusCount}>1</Text>
+              <Text style={styles.statusCount}>{event.participantsRejected}</Text>
               <Text style={styles.statusLabel}>Odrzuciło</Text>
             </View>
           </View>

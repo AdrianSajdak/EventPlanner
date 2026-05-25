@@ -11,64 +11,17 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
-import { EventCard, EventCardData } from '../../components/common/EventCard';
+import { EventCard } from '../../components/common/EventCard';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
+import {
+  MOCK_PENDING_CARDS,
+  MOCK_ACCEPTED_CARDS,
+  MOCK_HOSTED_CARDS,
+} from '../../data/mockEvents';
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'Dashboard'>;
 };
-
-const MOCK_PENDING: EventCardData[] = [
-  {
-    id: '1',
-    title: 'Wieczór z Planszówkami',
-    date: '12 Paź, 19:00',
-    location: 'Cybermachina',
-    organizer: { name: 'Marek Kowalski' },
-  },
-];
-
-const MOCK_ACCEPTED: EventCardData[] = [
-  {
-    id: '2',
-    title: 'Wieczór z Planszówkami',
-    date: '12 Paź, 19:00',
-    location: 'Cybermachina',
-    organizer: { name: 'Marek Kowalski' },
-    participants: [{}, {}],
-    totalParticipants: 7,
-  },
-  {
-    id: '3',
-    title: 'Kino Letnie',
-    date: '14 Paź, 20:00',
-    location: 'Planty Park',
-    organizer: { name: 'Anna Nowak' },
-    participants: [{}, {}],
-    totalParticipants: 5,
-  },
-];
-
-const MOCK_HOSTED: EventCardData[] = [
-  {
-    id: '4',
-    title: 'Wieczór z Planszówkami',
-    date: '12 Paź, 19:00',
-    location: 'Cybermachina',
-    organizer: { name: '' },
-    participants: [{}, {}],
-    totalParticipants: 7,
-  },
-  {
-    id: '5',
-    title: 'BBQ w ogrodzie',
-    date: '18 Paź, 15:00',
-    location: 'Ogród Botaniczny',
-    organizer: { name: '' },
-    participants: [{}, {}],
-    totalParticipants: 4,
-  },
-];
 
 type SectionTitleProps = {
   label: string;
@@ -123,7 +76,7 @@ export default function DashboardScreen({ navigation }: Props) {
             onToggle={() => toggle('pending')}
           />
           {!collapsed.pending &&
-            MOCK_PENDING.map((event) => (
+            MOCK_PENDING_CARDS.map((event) => (
               <EventCard
                 key={event.id}
                 event={event}
@@ -141,7 +94,7 @@ export default function DashboardScreen({ navigation }: Props) {
             onToggle={() => toggle('accepted')}
           />
           {!collapsed.accepted &&
-            MOCK_ACCEPTED.map((event) => (
+            MOCK_ACCEPTED_CARDS.map((event) => (
               <EventCard
                 key={event.id}
                 event={event}
@@ -158,7 +111,7 @@ export default function DashboardScreen({ navigation }: Props) {
             onToggle={() => toggle('hosted')}
           />
           {!collapsed.hosted &&
-            MOCK_HOSTED.map((event) => (
+            MOCK_HOSTED_CARDS.map((event) => (
               <EventCard
                 key={event.id}
                 event={event}
