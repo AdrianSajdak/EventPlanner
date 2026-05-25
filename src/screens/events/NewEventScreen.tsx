@@ -12,6 +12,7 @@ import { Button } from '../../components/common/Button';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { INVITABLE_FRIENDS } from '../../data/mockFriends';
 import { useEvents } from '../../context/EventsContext';
+import { useFriendLists } from '../../context/FriendsContext';
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'NewEvent'>;
@@ -34,6 +35,7 @@ const StepIndicator = ({ current }: { current: Step }) => (
 
 export default function NewEventScreen({ navigation }: Props) {
   const { addHostedEvent } = useEvents();
+  const { lists } = useFriendLists();
   const [step, setStep] = useState<Step>(1);
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
@@ -69,6 +71,23 @@ export default function NewEventScreen({ navigation }: Props) {
     setDraftIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
+
+  const isListFullySelected = (friendIds: string[]) =>
+    friendIds.length > 0 && friendIds.every((id) => draftIds.includes(id));
+
+  const toggleList = (friendIds: string[]) => {
+    setDraftIds((prev) => {
+      const fullySelected = friendIds.every((id) => prev.includes(id));
+      if (fullySelected) {
+        return prev.filter((id) => !friendIds.includes(id));
+      }
+      const merged = [...prev];
+      friendIds.forEach((id) => {
+        if (!merged.includes(id)) merged.push(id);
+      });
+      return merged;
+    });
+  };
 
   const confirmPicker = () => {
     setParticipantIds(draftIds);
@@ -254,10 +273,43 @@ export default function NewEventScreen({ navigation }: Props) {
           <View style={styles.modalBackdrop}>
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>Wybierz uczestników</Text>
+
+              {lists.length > 0 && (
+                <View style={styles.listsBlock}>
+                  <Text style={styles.listsLabel}>Z listy</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.chipsRow}
+                  >
+                    {lists.map((l) => {
+                      const active = isListFullySelected(l.friendIds);
+                      return (
+                        <TouchableOpacity
+                          key={l.id}
+                          style={[styles.listChip, active && styles.listChipActive]}
+                          onPress={() => toggleList(l.friendIds)}
+                          activeOpacity={0.7}
+                        >
+                          <Text
+                            style={[styles.listChipText, active && styles.listChipTextActive]}
+                          >
+                            {active ? '✓ ' : ''}
+                            {l.name} ({l.friendIds.length})
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
+
               <FlatList
                 data={INVITABLE_FRIENDS}
                 keyExtractor={(item) => item.id}
+                style={styles.modalListFlex}
                 contentContainerStyle={styles.modalList}
+                showsVerticalScrollIndicator
                 renderItem={({ item }) => {
                   const checked = draftIds.includes(item.id);
                   return (
@@ -468,7 +520,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 24,
-    maxHeight: '80%',
+    height: '80%',
+  },
+  modalListFlex: {
+    flex: 1,
   },
   modalTitle: {
     fontFamily: Fonts.bold,
@@ -528,5 +583,40 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: Colors.divider,
+  },
+  listsBlock: {
+    gap: 6,
+    marginBottom: 12,
+  },
+  listsLabel: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.sm,
+    color: Colors.actualMainBlue,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  chipsRow: {
+    gap: 8,
+    paddingVertical: 2,
+    paddingRight: 8,
+  },
+  listChip: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.actualMainBlue,
+    backgroundColor: Colors.white,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  listChipActive: {
+    backgroundColor: Colors.actualMainBlue,
+  },
+  listChipText: {
+    fontFamily: Fonts.semiBold,
+    fontSize: 13,
+    color: Colors.actualMainBlue,
+  },
+  listChipTextActive: {
+    color: Colors.white,
   },
 });
