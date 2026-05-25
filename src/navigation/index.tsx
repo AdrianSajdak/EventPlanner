@@ -3,6 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
+import { EventsProvider } from '../context/EventsContext';
+import { FriendsProvider } from '../context/FriendsContext';
 
 export type RootStackParamList = {
   Auth: undefined;
@@ -13,11 +15,15 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Auth">
-        <Stack.Screen name="Auth" component={AuthNavigator} />
-        <Stack.Screen name="Main" component={MainNavigator} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <EventsProvider>
+      <FriendsProvider>
+        <NavigationContainer>
+          <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Auth">
+            <Stack.Screen name="Auth" component={AuthNavigator} />
+            <Stack.Screen name="Main" component={MainNavigator} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </FriendsProvider>
+    </EventsProvider>
   );
 }

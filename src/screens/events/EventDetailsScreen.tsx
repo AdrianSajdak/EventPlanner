@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  SafeAreaView, Image,
+  SafeAreaView, Image, Modal, FlatList,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
+import { Button } from '../../components/common/Button';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
-import { EventDetails, getMockEvent } from '../../data/mockEvents';
+import { EventDetails } from '../../data/mockEvents';
+import { useEvents } from '../../context/EventsContext';
+import { MOCK_FRIENDS } from '../../data/mockFriends';
 
 type Tab = 'info' | 'planning' | 'chat';
 
@@ -18,11 +21,17 @@ type Props = {
   route: RouteProp<EventsStackParamList, 'EventDetails'>;
 };
 
-const InfoTab = ({ event }: { event: EventDetails }) => {
+type InfoTabProps = {
+  event: EventDetails;
+  onResign: () => void;
+  onShowParticipants: () => void;
+};
+
+const InfoTab = ({ event, onResign, onShowParticipants }: InfoTabProps) => {
   const remaining = Math.max(event.participantsTotal - 4, 0);
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.tabContent}>
-      <TouchableOpacity style={styles.resignButton} activeOpacity={0.8}>
+      <TouchableOpacity style={styles.resignButton} activeOpacity={0.8} onPress={onResign}>
         <Text style={styles.resignText}>Zrezygnuj</Text>
         <Text style={styles.resignArrow}> →</Text>
       </TouchableOpacity>
@@ -78,7 +87,7 @@ const InfoTab = ({ event }: { event: EventDetails }) => {
       <View style={styles.participantsSection}>
         <View style={styles.participantsHeader}>
           <Text style={styles.participantsTitle}>Uczestnicy ({event.participantsTotal})</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={onShowParticipants} activeOpacity={0.7}>
             <Text style={styles.seeAll}>Zobacz wszystkich</Text>
           </TouchableOpacity>
         </View>
@@ -101,8 +110,23 @@ const InfoTab = ({ event }: { event: EventDetails }) => {
 
 export default function EventDetailsScreen({ navigation, route }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('info');
+  const [participantsOpen, setParticipantsOpen] = useState(false);
   const { eventId } = route.params;
-  const event = getMockEvent(eventId);
+  const { getEvent, leaveEvent } = useEvents();
+  const event = getEvent(eventId);
+
+  const participants = useMemo(() => {
+    const invited = event.invitedFriendIds;
+    if (invited && invited.length > 0) {
+      return MOCK_FRIENDS.filter((f) => invited.includes(f.id));
+    }
+    return MOCK_FRIENDS;
+  }, [event.invitedFriendIds]);
+
+  const handleResign = () => {
+    leaveEvent(eventId);
+    navigation.popToTop();
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -134,7 +158,54 @@ export default function EventDetailsScreen({ navigation, route }: Props) {
         ))}
       </View>
 
-      <InfoTab event={event} />
+      <InfoTab
+        event={event}
+        onResign={handleResign}
+        onShowParticipants={() => setParticipantsOpen(true)}
+      />
+
+      <Modal
+        visible={participantsOpen}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setParticipantsOpen(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>
+              Uczestnicy ({participants.length})
+            </Text>
+            <FlatList
+              data={participants}
+              keyExtractor={(item) => item.id}
+              style={styles.modalListFlex}
+              contentContainerStyle={styles.modalList}
+              showsVerticalScrollIndicator
+              renderItem={({ item }) => (
+                <View style={styles.participantRow}>
+                  <View style={styles.participantAvatarSm}>
+                    <Text style={styles.participantInitial}>{item.name[0]}</Text>
+                  </View>
+                  <View style={styles.participantInfo}>
+                    <Text style={styles.participantName}>{item.name}</Text>
+                    <Text style={styles.participantMeta}>
+                      {item.mutualEvents} wspólnych wydarzeń
+                    </Text>
+                  </View>
+                </View>
+              )}
+            />
+            <View style={styles.modalActions}>
+              <Button
+                label="Zamknij"
+                variant="primary"
+                onPress={() => setParticipantsOpen(false)}
+                style={styles.modalBtn}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -395,5 +466,74 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     fontSize: 12,
     color: Colors.graySecondary,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    backgroundColor: Colors.offWhite,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 24,
+    height: '70%',
+  },
+  modalTitle: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.lg,
+    color: Colors.secondaryDarkBlue,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalListFlex: { flex: 1 },
+  modalList: { gap: 8, paddingBottom: 16 },
+  participantRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: Colors.lightModeMainTheme,
+    borderWidth: 1,
+    borderColor: Colors.secondaryDarkBlue,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  participantAvatarSm: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.actualMainBlue,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  participantInitial: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.base,
+    color: Colors.white,
+  },
+  participantInfo: { flex: 1, gap: 2 },
+  participantName: {
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.base,
+    color: Colors.black,
+  },
+  participantMeta: {
+    fontFamily: Fonts.regular,
+    fontSize: 12,
+    color: Colors.mainGraySecondary,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.divider,
+  },
+  modalBtn: {
+    paddingHorizontal: 28,
+    paddingVertical: 10,
   },
 });

@@ -20,6 +20,7 @@ export interface EventDetails {
   participantsRejected: number;
   voteTitle: string;
   voteOptions: EventVoteOption[];
+  invitedFriendIds?: string[];
 }
 
 const BASE_EVENT: Omit<EventDetails, 'id'> = {
@@ -46,8 +47,51 @@ export const MOCK_EVENTS: EventDetails[] = ['1', '2', '3', '4', '5'].map((id) =>
   ...BASE_EVENT,
 }));
 
+export const MOCK_HISTORICAL_EVENTS: EventDetails[] = [
+  {
+    ...BASE_EVENT,
+    id: 'hist-1',
+    title: 'Wieczór z planszówkami',
+    dateLabel: '15 Wrz 2025, 18:30',
+    shortDate: '15 Wrz 2025',
+    participantsAccepted: 7,
+    participantsPending: 0,
+    participantsRejected: 1,
+    participantsTotal: 8,
+    voteOptions: [],
+  },
+  {
+    ...BASE_EVENT,
+    id: 'hist-2',
+    title: 'Kino Letnie',
+    dateLabel: '02 Wrz 2025, 20:00',
+    shortDate: '02 Wrz 2025',
+    locationName: 'Planty Park',
+    locationStreet: 'Planty, ul. Basztowa',
+    participantsAccepted: 5,
+    participantsPending: 0,
+    participantsRejected: 0,
+    participantsTotal: 5,
+    voteOptions: [],
+  },
+  {
+    ...BASE_EVENT,
+    id: 'hist-3',
+    title: 'BBQ w ogrodzie',
+    dateLabel: '10 Sie 2025, 15:00',
+    shortDate: '10 Sie 2025',
+    locationName: 'Ogród Botaniczny',
+    locationStreet: 'Ogród Botaniczny UJ, ul. Kopernika',
+    participantsAccepted: 4,
+    participantsPending: 0,
+    participantsRejected: 0,
+    participantsTotal: 4,
+    voteOptions: [],
+  },
+];
+
 export const getMockEvent = (eventId: string): EventDetails =>
-  MOCK_EVENTS.find((e) => e.id === eventId) ?? MOCK_EVENTS[0];
+  [...MOCK_EVENTS, ...MOCK_HISTORICAL_EVENTS].find((e) => e.id === eventId) ?? MOCK_EVENTS[0];
 
 const toCardData = (event: EventDetails): EventCardData => ({
   id: event.id,

@@ -5,6 +5,9 @@ import SettingsScreen from '../screens/profile/SettingsScreen';
 import ChangePasswordScreen from '../screens/profile/ChangePasswordScreen';
 import ChangeEmailScreen from '../screens/profile/ChangeEmailScreen';
 import ChangePersonalDataScreen from '../screens/profile/ChangePersonalDataScreen';
+import LanguageScreen from '../screens/profile/LanguageScreen';
+import ThemeScreen from '../screens/profile/ThemeScreen';
+import AboutScreen from '../screens/profile/AboutScreen';
 
 export type ProfileStackParamList = {
   UserProfile: undefined;
@@ -12,6 +15,9 @@ export type ProfileStackParamList = {
   ChangePassword: undefined;
   ChangeEmail: undefined;
   ChangePersonalData: undefined;
+  Language: undefined;
+  Theme: undefined;
+  About: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -24,6 +30,9 @@ export default function ProfileNavigator() {
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="ChangeEmail" component={ChangeEmailScreen} />
       <Stack.Screen name="ChangePersonalData" component={ChangePersonalDataScreen} />
+      <Stack.Screen name="Language" component={LanguageScreen} />
+      <Stack.Screen name="Theme" component={ThemeScreen} />
+      <Stack.Screen name="About" component={AboutScreen} />
     </Stack.Navigator>
   );
 }
