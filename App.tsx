@@ -8,6 +8,7 @@ import {
 } from '@expo-google-fonts/lexend';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import RootNavigator from './src/navigation';
 import { Colors } from './src/theme/colors';
 
@@ -29,10 +30,10 @@ export default function App() {
   }
 
   return (
-    <>
-      <StatusBar style="auto" />
+    <SafeAreaProvider>
+      <StatusBar style="light" />
       <RootNavigator />
-    </>
+    </SafeAreaProvider>
   );
 }
 

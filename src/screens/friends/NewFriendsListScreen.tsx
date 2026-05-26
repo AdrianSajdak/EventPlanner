@@ -12,6 +12,7 @@ import { Button } from '../../components/common/Button';
 import { FriendsStackParamList } from '../../navigation/FriendsNavigator';
 import { MOCK_FRIENDS } from '../../data/mockFriends';
 import { useFriendLists } from '../../context/FriendsContext';
+import { logFriendListCreated } from '../../services/analytics';
 
 type Props = {
   navigation: NativeStackNavigationProp<FriendsStackParamList, 'NewFriendsList'>;
@@ -30,6 +31,7 @@ export default function NewFriendsListScreen({ navigation }: Props) {
 
   const handleCreate = () => {
     addList(listName, selected);
+    logFriendListCreated(selected.length);
     navigation.goBack();
   };
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 
@@ -28,6 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   showMenu = true,
 }) => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
 
   const handleMenuPress = () => {
     if (onMenu) {
@@ -39,7 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, height: 60 + insets.top }]}>
       <TouchableOpacity onPress={onBack} style={styles.titleContainer} activeOpacity={0.7}>
         {showBack && <Text style={styles.backArrow}>{'←  '}</Text>}
         <Text style={styles.title} numberOfLines={1}>{title}</Text>

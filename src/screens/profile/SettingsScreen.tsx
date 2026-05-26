@@ -4,6 +4,8 @@ import {
 } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import { Button } from '../../components/common/Button';
+import { deleteCurrentAccount, logout } from '../../services/auth';
+import { logAccountDeleted, logLogout, setAnalyticsUserId } from '../../services/analytics';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
@@ -38,7 +40,7 @@ export default function SettingsScreen({ navigation }: Props) {
   const [confirm, setConfirm] = useState<ConfirmKind>(null);
   const [deleteChecked, setDeleteChecked] = useState(false);
 
-  const goToLogin = () => {
+  const resetToAuth = () => {
     setConfirm(null);
     setDeleteChecked(false);
     const rootNav = navigation.getParent<any>()?.getParent<any>();
@@ -48,6 +50,28 @@ export default function SettingsScreen({ navigation }: Props) {
         routes: [{ name: 'Auth' }],
       })
     );
+  };
+
+  const handleLogoutConfirmed = async () => {
+    try {
+      await logLogout();
+      await logout();
+      await setAnalyticsUserId(null);
+    } catch {
+      // intentionally silent
+    }
+    resetToAuth();
+  };
+
+  const handleDeleteConfirmed = async () => {
+    try {
+      await logAccountDeleted();
+      await deleteCurrentAccount();
+      await setAnalyticsUserId(null);
+    } catch {
+      // intentionally silent
+    }
+    resetToAuth();
   };
 
   const closeConfirm = () => {
@@ -69,7 +93,7 @@ export default function SettingsScreen({ navigation }: Props) {
       title: 'Wyloguj się',
       message: 'Czy na pewno chcesz się wylogować?',
       primaryLabel: 'Wyloguj',
-      onPrimary: goToLogin,
+      onPrimary: handleLogoutConfirmed,
     },
     'delete-1': {
       title: 'Usuń konto',
@@ -83,7 +107,7 @@ export default function SettingsScreen({ navigation }: Props) {
       message:
         'Potwierdź, że rozumiesz konsekwencje. Po usunięciu konta nie odzyskasz danych ani historii wydarzeń.',
       primaryLabel: 'Tak, usuń konto',
-      onPrimary: goToLogin,
+      onPrimary: handleDeleteConfirmed,
       primaryDisabled: !deleteChecked,
     },
   };

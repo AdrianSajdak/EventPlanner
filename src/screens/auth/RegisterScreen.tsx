@@ -14,6 +14,9 @@ import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Input } from '../../components/common/Input';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { CommonActions } from '@react-navigation/native';
+import { registerWithEmail } from '../../services/auth';
+import { logSignUp, setAnalyticsUserId } from '../../services/analytics';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Register'>;
@@ -23,6 +26,28 @@ export default function RegisterScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleRegister = async () => {
+    if (submitting || !email || !password || password !== confirmPassword) return;
+    setSubmitting(true);
+    try {
+      const credential = await registerWithEmail(email, password);
+      await logSignUp('password');
+      await setAnalyticsUserId(credential.user.uid);
+      const rootNav = navigation.getParent<any>();
+      rootNav?.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        })
+      );
+    } catch {
+      // intentionally silent
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -77,7 +102,8 @@ export default function RegisterScreen({ navigation }: Props) {
                   />
                   <TouchableOpacity
                     style={styles.actionButton}
-                    onPress={() => navigation.navigate('Main' as any)}
+                    onPress={handleRegister}
+                    disabled={submitting}
                     activeOpacity={0.85}
                   >
                     <Text style={styles.actionButtonText}>Zarejestruj się  →</Text>

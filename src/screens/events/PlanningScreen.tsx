@@ -9,6 +9,7 @@ import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { useEvents } from '../../context/EventsContext';
+import { logPollVoted } from '../../services/analytics';
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'Planning'>;
@@ -62,7 +63,10 @@ export default function PlanningScreen({ navigation, route }: Props) {
                   <TouchableOpacity
                     key={option.label}
                     style={[styles.voteOption, option.voted && styles.voteOptionVoted]}
-                    onPress={() => voteOnPoll(eventId, poll.id, option.label)}
+                    onPress={() => {
+                      voteOnPoll(eventId, poll.id, option.label);
+                      logPollVoted(eventId, poll.id);
+                    }}
                     activeOpacity={0.7}
                   >
                     <View style={[styles.voteBar, { width: `${pct}%` as any }]} />

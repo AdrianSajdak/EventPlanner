@@ -13,6 +13,7 @@ import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { EventDetails } from '../../data/mockEvents';
 import { useEvents } from '../../context/EventsContext';
 import { MOCK_FRIENDS } from '../../data/mockFriends';
+import { logEventLeft } from '../../services/analytics';
 
 type Tab = 'info' | 'planning' | 'chat';
 
@@ -125,6 +126,7 @@ export default function EventDetailsScreen({ navigation, route }: Props) {
 
   const handleResign = () => {
     leaveEvent(eventId);
+    logEventLeft(eventId);
     navigation.popToTop();
   };
 
