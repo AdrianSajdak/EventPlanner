@@ -13,6 +13,7 @@ import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { INVITABLE_FRIENDS } from '../../data/mockFriends';
 import { useEvents } from '../../context/EventsContext';
 import { useFriendLists } from '../../context/FriendsContext';
+import { logEventCreated } from '../../services/analytics';
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'NewEvent'>;
@@ -106,6 +107,7 @@ export default function NewEventScreen({ navigation }: Props) {
       description,
       participantsCount: participantIds.length,
     });
+    logEventCreated({ participants_count: participantIds.length });
     navigation.goBack();
   };
 

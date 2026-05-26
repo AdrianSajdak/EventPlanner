@@ -12,6 +12,7 @@ import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { useEvents } from '../../context/EventsContext';
+import { logCounterProposalAdded } from '../../services/analytics';
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'CounterProposal'>;
@@ -32,6 +33,7 @@ export default function CounterProposalScreen({ navigation, route }: Props) {
       .filter(Boolean);
     if (!topic.trim() || options.length < 2) return;
     addPoll(eventId, topic.trim(), options);
+    logCounterProposalAdded(eventId, options.length);
     navigation.goBack();
   };
 

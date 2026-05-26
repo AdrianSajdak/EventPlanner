@@ -12,6 +12,7 @@ import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { Button } from '../../components/common/Button';
 import { useEvents } from '../../context/EventsContext';
 import { INVITABLE_FRIENDS } from '../../data/mockFriends';
+import { logParticipantsInvited } from '../../services/analytics';
 
 type Tab = 'info' | 'planning' | 'chat';
 
@@ -47,6 +48,7 @@ export default function EventDetailsOrganizerScreen({ navigation, route }: Props
   const confirmInvite = () => {
     if (draftIds.length > 0) {
       inviteToEvent(eventId, draftIds);
+      logParticipantsInvited(eventId, draftIds.length);
     }
     setInviteOpen(false);
   };

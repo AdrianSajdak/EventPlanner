@@ -15,6 +15,7 @@ import { EventCard, EventCardData } from '../../components/common/EventCard';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { MOCK_PENDING_CARDS } from '../../data/mockEvents';
 import { useEvents } from '../../context/EventsContext';
+import { logEventInviteAccepted, logEventInviteRejected } from '../../services/analytics';
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'Dashboard'>;
@@ -63,10 +64,12 @@ export default function DashboardScreen({ navigation }: Props) {
     if (!event) return;
     setPending((prev) => prev.filter((e) => e.id !== eventId));
     acceptInvite(toAcceptedCard(event));
+    logEventInviteAccepted(eventId);
   };
 
   const handleReject = (eventId: string) => {
     setPending((prev) => prev.filter((e) => e.id !== eventId));
+    logEventInviteRejected(eventId);
   };
 
   return (

@@ -10,6 +10,7 @@ import { Navbar } from '../../components/common/Navbar';
 import { Button } from '../../components/common/Button';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { useEvents } from '../../context/EventsContext';
+import { logEventCancelled } from '../../services/analytics';
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'CancelEvent'>;
@@ -33,6 +34,7 @@ export default function CancelEventScreen({ navigation, route }: Props) {
 
   const handleCancel = () => {
     cancelEvent(eventId);
+    logEventCancelled(eventId);
     navigation.popToTop();
   };
 
