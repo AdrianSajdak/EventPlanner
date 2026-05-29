@@ -10,18 +10,16 @@ import { Navbar } from '../../components/common/Navbar';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { FriendsStackParamList } from '../../navigation/FriendsNavigator';
+import { MOCK_FRIENDS } from '../../data/mockFriends';
+import { useFriendLists } from '../../context/FriendsContext';
+import { logFriendListCreated } from '../../services/analytics';
 
 type Props = {
   navigation: NativeStackNavigationProp<FriendsStackParamList, 'NewFriendsList'>;
 };
 
-const FRIENDS = [
-  { id: '1', name: 'Anna Kowalska' },
-  { id: '2', name: 'Marek Nowak' },
-  { id: '3', name: 'Piotr Wiśniewski' },
-];
-
 export default function NewFriendsListScreen({ navigation }: Props) {
+  const { addList } = useFriendLists();
   const [listName, setListName] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
 
@@ -29,6 +27,12 @@ export default function NewFriendsListScreen({ navigation }: Props) {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
+  };
+
+  const handleCreate = () => {
+    addList(listName, selected);
+    logFriendListCreated(selected.length);
+    navigation.goBack();
   };
 
   return (
@@ -50,7 +54,7 @@ export default function NewFriendsListScreen({ navigation }: Props) {
 
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Dodaj znajomych do listy</Text>
-            {FRIENDS.map((f) => (
+            {MOCK_FRIENDS.map((f) => (
               <TouchableOpacity
                 key={f.id}
                 style={[styles.friendRow, selected.includes(f.id) && styles.friendRowSelected]}
@@ -72,8 +76,8 @@ export default function NewFriendsListScreen({ navigation }: Props) {
             <Button
               label="Utwórz listę"
               variant="primary"
-              onPress={() => navigation.goBack()}
-              disabled={!listName}
+              onPress={handleCreate}
+              disabled={!listName || selected.length === 0}
               style={styles.btn}
             />
           </View>

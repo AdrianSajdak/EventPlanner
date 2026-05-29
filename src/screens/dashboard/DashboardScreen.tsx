@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -13,77 +13,68 @@ import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { EventCard, EventCardData } from '../../components/common/EventCard';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
+import { MOCK_PENDING_CARDS } from '../../data/mockEvents';
+import { useEvents } from '../../context/EventsContext';
+import { logEventInviteAccepted, logEventInviteRejected } from '../../services/analytics';
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'Dashboard'>;
 };
 
-const MOCK_PENDING: EventCardData[] = [
-  {
-    id: '1',
-    title: 'Wieczór z Planszówkami',
-    date: '12 Paź, 19:00',
-    location: 'Cybermachina',
-    organizer: { name: 'Marek Kowalski' },
-  },
-];
+type SectionTitleProps = {
+  label: string;
+  collapsed: boolean;
+  onToggle: () => void;
+};
 
-const MOCK_ACCEPTED: EventCardData[] = [
-  {
-    id: '2',
-    title: 'Wieczór z Planszówkami',
-    date: '12 Paź, 19:00',
-    location: 'Cybermachina',
-    organizer: { name: 'Marek Kowalski' },
-    participants: [{}, {}],
-    totalParticipants: 7,
-  },
-  {
-    id: '3',
-    title: 'Kino Letnie',
-    date: '14 Paź, 20:00',
-    location: 'Planty Park',
-    organizer: { name: 'Anna Nowak' },
-    participants: [{}, {}],
-    totalParticipants: 5,
-  },
-];
-
-const MOCK_HOSTED: EventCardData[] = [
-  {
-    id: '4',
-    title: 'Wieczór z Planszówkami',
-    date: '12 Paź, 19:00',
-    location: 'Cybermachina',
-    organizer: { name: '' },
-    participants: [{}, {}],
-    totalParticipants: 7,
-  },
-  {
-    id: '5',
-    title: 'BBQ w ogrodzie',
-    date: '18 Paź, 15:00',
-    location: 'Ogród Botaniczny',
-    organizer: { name: '' },
-    participants: [{}, {}],
-    totalParticipants: 4,
-  },
-];
-
-const SectionTitle: React.FC<{ label: string }> = ({ label }) => (
-  <View style={styles.sectionTitle}>
-    <Text style={styles.sectionArrow}>▼</Text>
+const SectionTitle: React.FC<SectionTitleProps> = ({ label, collapsed, onToggle }) => (
+  <TouchableOpacity
+    style={styles.sectionTitle}
+    onPress={onToggle}
+    activeOpacity={0.7}
+  >
+    <Text style={styles.sectionArrow}>{collapsed ? '▶' : '▼'}</Text>
     <Text style={styles.sectionText}>{label}</Text>
-  </View>
+  </TouchableOpacity>
 );
 
+type SectionKey = 'pending' | 'accepted' | 'hosted';
+
+const toAcceptedCard = (event: EventCardData): EventCardData => ({
+  ...event,
+  participants: event.participants ?? [{}, {}],
+  totalParticipants: event.totalParticipants ?? 7,
+});
+
 export default function DashboardScreen({ navigation }: Props) {
+  const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>({
+    pending: false,
+    accepted: false,
+    hosted: false,
+  });
+
+  const [pending, setPending] = useState<EventCardData[]>(MOCK_PENDING_CARDS);
+  const { hosted, accepted, acceptInvite } = useEvents();
+
+  const toggle = (key: SectionKey) =>
+    setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const handleAccept = (eventId: string) => {
+    const event = pending.find((e) => e.id === eventId);
+    if (!event) return;
+    setPending((prev) => prev.filter((e) => e.id !== eventId));
+    acceptInvite(toAcceptedCard(event));
+    logEventInviteAccepted(eventId);
+  };
+
+  const handleReject = (eventId: string) => {
+    setPending((prev) => prev.filter((e) => e.id !== eventId));
+    logEventInviteRejected(eventId);
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
-      <Navbar
-        title="Planner Wspólnych Wydarzeń"
-        onMenu={() => {}}
-      />
+      <Navbar title="Planner Wspólnych Wydarzeń" />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -99,41 +90,56 @@ export default function DashboardScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.section}>
-          <SectionTitle label="WYDARZENIA DO AKCEPTACJI (1):" />
-          {MOCK_PENDING.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              variant="pending"
-              onAccept={() => {}}
-              onReject={() => {}}
-            />
-          ))}
+          <SectionTitle
+            label={`WYDARZENIA DO AKCEPTACJI (${pending.length}):`}
+            collapsed={collapsed.pending}
+            onToggle={() => toggle('pending')}
+          />
+          {!collapsed.pending &&
+            pending.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                variant="pending"
+                onAccept={() => handleAccept(event.id)}
+                onReject={() => handleReject(event.id)}
+              />
+            ))}
         </View>
 
         <View style={styles.section}>
-          <SectionTitle label="ZAAKCEPTOWANE WYDARZENIA (2):" />
-          {MOCK_ACCEPTED.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              variant="accepted"
-              onDetails={() => navigation.navigate('EventDetails', { eventId: event.id, isOrganizer: false })}
-            />
-          ))}
+          <SectionTitle
+            label={`ZAAKCEPTOWANE WYDARZENIA (${accepted.length}):`}
+            collapsed={collapsed.accepted}
+            onToggle={() => toggle('accepted')}
+          />
+          {!collapsed.accepted &&
+            accepted.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                variant="accepted"
+                onDetails={() => navigation.navigate('EventDetails', { eventId: event.id, isOrganizer: false })}
+              />
+            ))}
         </View>
 
         <View style={styles.section}>
-          <SectionTitle label="ORGANIZOWANE PRZEZ CIEBIE (2):" />
-          {MOCK_HOSTED.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              variant="hosted"
-              onDetails={() => navigation.navigate('EventDetailsOrganizer', { eventId: event.id })}
-              onEdit={() => navigation.navigate('EventEditor', { eventId: event.id })}
-            />
-          ))}
+          <SectionTitle
+            label={`ORGANIZOWANE PRZEZ CIEBIE (${hosted.length}):`}
+            collapsed={collapsed.hosted}
+            onToggle={() => toggle('hosted')}
+          />
+          {!collapsed.hosted &&
+            hosted.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                variant="hosted"
+                onDetails={() => navigation.navigate('EventDetailsOrganizer', { eventId: event.id })}
+                onEdit={() => navigation.navigate('EventEditor', { eventId: event.id })}
+              />
+            ))}
         </View>
 
         <View style={styles.bottomPadding} />

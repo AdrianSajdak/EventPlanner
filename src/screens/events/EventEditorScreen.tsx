@@ -11,18 +11,42 @@ import { Navbar } from '../../components/common/Navbar';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
+import { useEvents } from '../../context/EventsContext';
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'EventEditor'>;
   route: RouteProp<EventsStackParamList, 'EventEditor'>;
 };
 
+const splitDateLabel = (label: string): { date: string; time: string } => {
+  const [datePart = '', timePart = ''] = label.split(/,\s*/);
+  return { date: datePart, time: timePart };
+};
+
 export default function EventEditorScreen({ navigation, route }: Props) {
-  const [title, setTitle] = useState('Wieczór z planszówkami');
-  const [date, setDate] = useState('15.10.2024');
-  const [time, setTime] = useState('18:30');
-  const [location, setLocation] = useState('Cybermachina, ul. Mikołajska 11');
+  const { eventId } = route.params;
+  const { getEvent, updateEvent } = useEvents();
+  const event = getEvent(eventId);
+  const initial = splitDateLabel(event.dateLabel);
+
+  const [title, setTitle] = useState(event.title);
+  const [date, setDate] = useState(initial.date);
+  const [time, setTime] = useState(initial.time);
+  const [location, setLocation] = useState(event.locationStreet);
   const [description, setDescription] = useState('');
+
+  const handleSave = () => {
+    const parts = [date.trim(), time.trim()].filter(Boolean);
+    const newLabel = parts.length > 0 ? parts.join(', ') : event.dateLabel;
+    updateEvent(eventId, {
+      title: title.trim() || event.title,
+      dateLabel: newLabel,
+      shortDate: newLabel,
+      locationStreet: location.trim() || event.locationStreet,
+      locationName: location.trim() || event.locationName,
+    });
+    navigation.goBack();
+  };
 
   return (
     <KeyboardAvoidingView
@@ -51,14 +75,14 @@ export default function EventEditorScreen({ navigation, route }: Props) {
             <Button
               label="Odwołaj wydarzenie"
               variant="secondary"
-              onPress={() => navigation.navigate('CancelEvent', { eventId: route.params.eventId })}
+              onPress={() => navigation.navigate('CancelEvent', { eventId })}
               style={styles.cancelBtn}
               textStyle={styles.cancelBtnText}
             />
             <Button
               label="Zapisz zmiany"
               variant="primary"
-              onPress={() => navigation.goBack()}
+              onPress={handleSave}
               style={styles.saveBtn}
             />
           </View>

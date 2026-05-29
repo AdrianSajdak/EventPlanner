@@ -8,25 +8,12 @@ import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { FriendsStackParamList } from '../../navigation/FriendsNavigator';
+import { Friend, MOCK_FRIENDS } from '../../data/mockFriends';
+import { useFriendLists } from '../../context/FriendsContext';
 
 type Props = {
   navigation: NativeStackNavigationProp<FriendsStackParamList, 'Friends'>;
 };
-
-interface Friend {
-  id: string;
-  name: string;
-  mutualEvents: number;
-  status: 'accepted' | 'pending';
-}
-
-const MOCK_FRIENDS: Friend[] = [
-  { id: '1', name: 'Anna Kowalska', mutualEvents: 5, status: 'accepted' },
-  { id: '2', name: 'Marek Nowak', mutualEvents: 3, status: 'accepted' },
-  { id: '3', name: 'Piotr Wiśniewski', mutualEvents: 7, status: 'accepted' },
-  { id: '4', name: 'Kasia Zielińska', mutualEvents: 2, status: 'accepted' },
-  { id: '5', name: 'Tomek Wójcik', mutualEvents: 1, status: 'pending' },
-];
 
 const FriendItem: React.FC<{ friend: Friend }> = ({ friend }) => (
   <View style={styles.friendItem}>
@@ -47,17 +34,20 @@ const FriendItem: React.FC<{ friend: Friend }> = ({ friend }) => (
 
 export default function FriendsScreen({ navigation }: Props) {
   const [search, setSearch] = useState('');
+  const { lists, removeList } = useFriendLists();
 
   const filtered = MOCK_FRIENDS.filter((f) =>
     f.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  const friendNamesByList = (friendIds: string[]) =>
+    MOCK_FRIENDS.filter((f) => friendIds.includes(f.id))
+      .map((f) => f.name.split(' ')[0])
+      .join(', ');
+
   return (
     <SafeAreaView style={styles.safe}>
-      <Navbar
-        title="Znajomi"
-        onMenu={() => {}}
-      />
+      <Navbar title="Znajomi" />
 
       <View style={styles.searchContainer}>
         <TextInput
@@ -92,6 +82,32 @@ export default function FriendsScreen({ navigation }: Props) {
         renderItem={({ item }) => <FriendItem friend={item} />}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          lists.length > 0 ? (
+            <View style={styles.listsSection}>
+              <Text style={styles.listsTitle}>Moje listy ({lists.length})</Text>
+              {lists.map((l) => (
+                <View key={l.id} style={styles.listCard}>
+                  <View style={styles.listInfo}>
+                    <Text style={styles.listName}>{l.name}</Text>
+                    <Text style={styles.listMeta}>
+                      {l.friendIds.length} {l.friendIds.length === 1 ? 'osoba' : 'osób'}
+                      {l.friendIds.length > 0 ? ` · ${friendNamesByList(l.friendIds)}` : ''}
+                    </Text>
+                  </View>
+                  {!l.isDefault && (
+                    <TouchableOpacity
+                      onPress={() => removeList(l.id)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Text style={styles.removeIcon}>×</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))}
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
           <Text style={styles.emptyText}>Brak znajomych do wyświetlenia</Text>
         }
@@ -208,5 +224,45 @@ const styles = StyleSheet.create({
     color: Colors.mainGraySecondary,
     textAlign: 'center',
     paddingVertical: 40,
+  },
+  listsSection: {
+    gap: 8,
+    marginBottom: 16,
+  },
+  listsTitle: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.sm,
+    color: Colors.actualMainBlue,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  listCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(0,82,209,0.08)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.actualMainBlue,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  listInfo: { flex: 1, gap: 2 },
+  listName: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.base,
+    color: Colors.secondaryDarkBlue,
+  },
+  listMeta: {
+    fontFamily: Fonts.regular,
+    fontSize: 12,
+    color: Colors.mainGraySecondary,
+  },
+  removeIcon: {
+    fontFamily: Fonts.bold,
+    fontSize: 22,
+    color: Colors.mainGraySecondary,
+    paddingHorizontal: 4,
   },
 });

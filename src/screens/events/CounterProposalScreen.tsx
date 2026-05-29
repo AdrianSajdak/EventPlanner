@@ -11,17 +11,31 @@ import { Navbar } from '../../components/common/Navbar';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
+import { useEvents } from '../../context/EventsContext';
+import { logCounterProposalAdded } from '../../services/analytics';
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'CounterProposal'>;
   route: RouteProp<EventsStackParamList, 'CounterProposal'>;
 };
 
-export default function CounterProposalScreen({ navigation }: Props) {
+export default function CounterProposalScreen({ navigation, route }: Props) {
+  const { eventId } = route.params;
+  const { addPoll } = useEvents();
   const [topic, setTopic] = useState('');
   const [option1, setOption1] = useState('');
   const [option2, setOption2] = useState('');
   const [option3, setOption3] = useState('');
+
+  const handleCreate = () => {
+    const options = [option1, option2, option3]
+      .map((o) => o.trim())
+      .filter(Boolean);
+    if (!topic.trim() || options.length < 2) return;
+    addPoll(eventId, topic.trim(), options);
+    logCounterProposalAdded(eventId, options.length);
+    navigation.goBack();
+  };
 
   return (
     <KeyboardAvoidingView
@@ -80,7 +94,7 @@ export default function CounterProposalScreen({ navigation }: Props) {
             <Button
               label="Dodaj głosowanie"
               variant="primary"
-              onPress={() => navigation.goBack()}
+              onPress={handleCreate}
               disabled={!topic || !option1 || !option2}
               style={styles.actionBtn}
             />

@@ -15,6 +15,9 @@ import { Fonts, FontSizes } from '../../theme/typography';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { CommonActions } from '@react-navigation/native';
+import { loginWithEmail } from '../../services/auth';
+import { logLogin, setAnalyticsUserId } from '../../services/analytics';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'>;
@@ -23,6 +26,28 @@ type Props = {
 export default function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleLogin = async () => {
+    if (submitting || !email || !password) return;
+    setSubmitting(true);
+    try {
+      const credential = await loginWithEmail(email, password);
+      await logLogin('password');
+      await setAnalyticsUserId(credential.user.uid);
+      const rootNav = navigation.getParent<any>();
+      rootNav?.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        })
+      );
+    } catch {
+      // intentionally silent
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -70,7 +95,8 @@ export default function LoginScreen({ navigation }: Props) {
                   />
                   <TouchableOpacity
                     style={styles.actionButton}
-                    onPress={() => navigation.navigate('Main' as any)}
+                    onPress={handleLogin}
+                    disabled={submitting}
                     activeOpacity={0.85}
                   >
                     <Text style={styles.actionButtonText}>Zaloguj się  →</Text>

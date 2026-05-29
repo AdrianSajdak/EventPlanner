@@ -8,6 +8,7 @@ import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { Button } from '../../components/common/Button';
 import { ProfileStackParamList } from '../../navigation/ProfileNavigator';
+import { MOCK_HISTORICAL_EVENTS } from '../../data/mockEvents';
 
 type Props = {
   navigation: NativeStackNavigationProp<ProfileStackParamList, 'UserProfile'>;
@@ -21,16 +22,24 @@ const StatBox = ({ label, value }: { label: string; value: string }) => (
 );
 
 export default function UserProfileScreen({ navigation }: Props) {
+  const openHistoricalEvent = (eventId: string) => {
+    const parent = navigation.getParent<any>();
+    parent?.navigate('events', {
+      screen: 'EventHistory',
+      params: { eventId },
+    });
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
-      <Navbar title="Profil" onMenu={() => navigation.navigate('Settings')} />
+      <Navbar title="Profil" />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.profileHeader}>
           <View style={styles.avatarLarge}>
-            <Text style={styles.avatarText}>A</Text>
+            <Text style={styles.avatarText}>I</Text>
           </View>
-          <Text style={styles.userName}>Adrian Sajdak</Text>
-          <Text style={styles.userEmail}>adrian@example.pl</Text>
+          <Text style={styles.userName}>Imie Nazwisko</Text>
+          <Text style={styles.userEmail}>imienazwisko@example.pl</Text>
         </View>
 
         <View style={styles.statsRow}>
@@ -41,16 +50,20 @@ export default function UserProfileScreen({ navigation }: Props) {
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Ostatnia aktywność</Text>
-          {['Wieczór z planszówkami', 'Kino Letnie', 'BBQ w ogrodzie'].map((event, i) => (
-            <View key={i} style={styles.activityItem}>
+          {MOCK_HISTORICAL_EVENTS.map((event) => (
+            <TouchableOpacity
+              key={event.id}
+              style={styles.activityItem}
+              onPress={() => openHistoricalEvent(event.id)}
+              activeOpacity={0.7}
+            >
               <Text style={styles.activityIcon}>🎭</Text>
               <View style={styles.activityInfo}>
-                <Text style={styles.activityTitle}>{event}</Text>
-                <Text style={styles.activityDate}>
-                  {i === 0 ? 'Za 2 dni' : i === 1 ? 'Za tydzień' : '2 tygodnie temu'}
-                </Text>
+                <Text style={styles.activityTitle}>{event.title}</Text>
+                <Text style={styles.activityDate}>{event.shortDate}</Text>
               </View>
-            </View>
+              <Text style={styles.activityArrow}>›</Text>
+            </TouchableOpacity>
           ))}
         </View>
 
@@ -152,7 +165,12 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.divider,
   },
   activityIcon: { fontSize: 24 },
-  activityInfo: { gap: 2 },
+  activityInfo: { flex: 1, gap: 2 },
+  activityArrow: {
+    fontFamily: Fonts.bold,
+    fontSize: 22,
+    color: Colors.mainGraySecondary,
+  },
   activityTitle: {
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.base,
