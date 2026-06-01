@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
+import { AppIcon, AppIconName } from './AppIcon';
 
 export type BottomTab = 'events' | 'friends' | 'notifications' | 'profile';
 
@@ -16,11 +17,11 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onTabPress,
   notificationCount,
 }) => {
-  const tabs: { key: BottomTab; label: string; icon: string }[] = [
-    { key: 'events', label: 'Wydarzenia', icon: '📅' },
-    { key: 'friends', label: 'Znajomi', icon: '👥' },
-    { key: 'notifications', label: 'Powiadomienia', icon: '🔔' },
-    { key: 'profile', label: 'Profil', icon: '👤' },
+  const tabs: { key: BottomTab; label: string; icon: AppIconName }[] = [
+    { key: 'events', label: 'Wydarzenia', icon: 'calendar' },
+    { key: 'friends', label: 'Znajomi', icon: 'friends' },
+    { key: 'notifications', label: 'Powiadomienia', icon: 'notifications' },
+    { key: 'profile', label: 'Profil', icon: 'profile' },
   ];
 
   return (
@@ -35,7 +36,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             activeOpacity={0.7}
           >
             <View style={styles.iconWrapper}>
-              <Text style={styles.icon}>{tab.icon}</Text>
+              <AppIcon name={tab.icon} size={22} color={Colors.white} />
               {tab.key === 'notifications' && notificationCount ? (
                 <View style={styles.badge} />
               ) : null}
@@ -68,9 +69,6 @@ const styles = StyleSheet.create({
   },
   iconWrapper: {
     position: 'relative',
-  },
-  icon: {
-    fontSize: 18,
   },
   badge: {
     position: 'absolute',

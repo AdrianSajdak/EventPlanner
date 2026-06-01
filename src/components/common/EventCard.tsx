@@ -3,6 +3,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Button } from './Button';
+import { AppIcon } from './AppIcon';
 
 export interface EventCardData {
   id: string;
@@ -63,8 +64,14 @@ export const EventCard: React.FC<EventCardProps> = ({
       </View>
 
       <View style={styles.metaRow}>
-        <Text style={styles.metaText}>📅 {event.date}</Text>
-        <Text style={styles.metaText}>📍 {event.location}</Text>
+        <View style={styles.metaItem}>
+          <AppIcon name="calendar" size={16} color={Colors.mainGraySecondary} />
+          <Text style={styles.metaText}>{event.date}</Text>
+        </View>
+        <View style={styles.metaItem}>
+          <AppIcon name="localization" size={16} color={Colors.mainGraySecondary} />
+          <Text style={styles.metaText}>{event.location}</Text>
+        </View>
       </View>
 
       <View style={styles.organizerRow}>
@@ -148,6 +155,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 16,
     alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   metaText: {
     fontFamily: Fonts.medium,

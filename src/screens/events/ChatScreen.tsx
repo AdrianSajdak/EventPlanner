@@ -8,6 +8,7 @@ import { RouteProp } from '@react-navigation/native';
 import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
+import { AppIcon } from '../../components/common/AppIcon';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 
 type Props = {
@@ -108,7 +109,7 @@ export default function ChatScreen({ navigation, route }: Props) {
             multiline
           />
           <TouchableOpacity style={styles.sendBtn} onPress={sendMessage} activeOpacity={0.8}>
-            <Text style={styles.sendIcon}>→</Text>
+            <AppIcon name="send" size={20} color={Colors.white} />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -228,10 +229,5 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.actualMainBlue,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  sendIcon: {
-    color: Colors.white,
-    fontSize: 18,
-    fontFamily: Fonts.bold,
   },
 });

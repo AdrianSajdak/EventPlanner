@@ -5,6 +5,7 @@ import {
 import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
+import { AppIcon, AppIconName } from '../../components/common/AppIcon';
 
 interface Notification {
   id: string;
@@ -58,11 +59,11 @@ const MOCK_NOTIFICATIONS: Notification[] = [
   },
 ];
 
-const typeIcon: Record<Notification['type'], string> = {
-  invitation: '📨',
-  update: '📝',
-  reminder: '⏰',
-  vote: '🗳️',
+const typeIcon: Record<Notification['type'], AppIconName> = {
+  invitation: 'friends',
+  update: 'update',
+  reminder: 'calendar',
+  vote: 'poll',
 };
 
 const typeColor: Record<Notification['type'], string> = {
@@ -85,7 +86,7 @@ export default function NotificationsScreen() {
             activeOpacity={0.7}
           >
             <View style={[styles.iconContainer, { backgroundColor: typeColor[item.type] + '20' }]}>
-              <Text style={styles.icon}>{typeIcon[item.type]}</Text>
+              <AppIcon name={typeIcon[item.type]} size={22} color={typeColor[item.type]} />
             </View>
             <View style={styles.notifContent}>
               <View style={styles.notifHeader}>
@@ -134,7 +135,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
-  icon: { fontSize: 20 },
   notifContent: { flex: 1, gap: 4 },
   notifHeader: {
     flexDirection: 'row',

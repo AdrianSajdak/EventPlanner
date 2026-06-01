@@ -7,6 +7,7 @@ import { RouteProp } from '@react-navigation/native';
 import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
+import { AppIcon } from '../../components/common/AppIcon';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { useEvents } from '../../context/EventsContext';
 
@@ -34,7 +35,7 @@ export default function EventHistoryScreen({ navigation, route }: Props) {
         </View>
 
         <View style={styles.statCard}>
-          <Text style={styles.statIcon}>📅</Text>
+          <AppIcon name="calendar" size={24} color={Colors.actualMainBlue} />
           <View style={styles.statInfo}>
             <Text style={styles.statLabel}>Data i Godzina</Text>
             <Text style={styles.statValue}>{event.dateLabel}</Text>
@@ -42,7 +43,7 @@ export default function EventHistoryScreen({ navigation, route }: Props) {
         </View>
 
         <View style={styles.statCard}>
-          <Text style={styles.statIcon}>📍</Text>
+          <AppIcon name="localization" size={24} color={Colors.mainGraySecondary} />
           <View style={styles.statInfo}>
             <Text style={styles.statLabel}>Lokalizacja</Text>
             <Text style={styles.statValue}>{event.locationName}</Text>
@@ -54,7 +55,7 @@ export default function EventHistoryScreen({ navigation, route }: Props) {
         </View>
 
         <View style={styles.statCard}>
-          <Text style={styles.statIcon}>👥</Text>
+          <AppIcon name="friends" size={24} color={Colors.actualMainBlue} />
           <View style={styles.statInfo}>
             <Text style={styles.statLabel}>Uczestnicy</Text>
             <Text style={styles.statValue}>{event.participantsTotal} osób</Text>
@@ -110,7 +111,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     padding: 16,
   },
-  statIcon: { fontSize: 22, lineHeight: 28 },
   statInfo: { flex: 1, gap: 2 },
   statLabel: {
     fontFamily: Fonts.regular,
