@@ -3,13 +3,14 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Modal,
 } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Button } from '../../components/common/Button';
+import { AppIcon, AppIconName } from '../../components/common/AppIcon';
+import { Navbar } from '../../components/common/Navbar';
 import { deleteCurrentAccount, logout } from '../../services/auth';
 import { logAccountDeleted, logLogout, setAnalyticsUserId } from '../../services/analytics';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
-import { Navbar } from '../../components/common/Navbar';
 import { ProfileStackParamList } from '../../navigation/ProfileNavigator';
 
 type Props = {
@@ -22,13 +23,17 @@ const SettingsItem = ({
   onPress,
   danger,
 }: {
-  icon: string;
+  icon: AppIconName;
   label: string;
   onPress: () => void;
   danger?: boolean;
 }) => (
   <TouchableOpacity style={styles.settingsItem} onPress={onPress} activeOpacity={0.7}>
-    <Text style={styles.settingsIcon}>{icon}</Text>
+    <AppIcon
+      name={icon}
+      size={22}
+      color={danger ? Colors.errorRed : Colors.secondaryDarkBlue}
+    />
     <Text style={[styles.settingsLabel, danger && styles.dangerText]}>{label}</Text>
     <Text style={styles.arrow}>›</Text>
   </TouchableOpacity>
@@ -120,19 +125,19 @@ export default function SettingsScreen({ navigation }: Props) {
           <Text style={styles.sectionTitle}>Konto</Text>
           <View style={styles.card}>
             <SettingsItem
-              icon="📧"
+              icon="email"
               label="Zmień adres e-mail"
               onPress={() => navigation.navigate('ChangeEmail')}
             />
             <View style={styles.separator} />
             <SettingsItem
-              icon="🔒"
+              icon="lock"
               label="Zmień hasło"
               onPress={() => navigation.navigate('ChangePassword')}
             />
             <View style={styles.separator} />
             <SettingsItem
-              icon="👤"
+              icon="idCard"
               label="Zmień dane personalne"
               onPress={() => navigation.navigate('ChangePersonalData')}
             />
@@ -143,19 +148,7 @@ export default function SettingsScreen({ navigation }: Props) {
           <Text style={styles.sectionTitle}>Aplikacja</Text>
           <View style={styles.card}>
             <SettingsItem
-              icon="🌐"
-              label="Język"
-              onPress={() => navigation.navigate('Language')}
-            />
-            <View style={styles.separator} />
-            <SettingsItem
-              icon="🎨"
-              label="Motyw"
-              onPress={() => navigation.navigate('Theme')}
-            />
-            <View style={styles.separator} />
-            <SettingsItem
-              icon="ℹ️"
+              icon="shield"
               label="O aplikacji"
               onPress={() => navigation.navigate('About')}
             />
@@ -165,14 +158,14 @@ export default function SettingsScreen({ navigation }: Props) {
         <View style={styles.section}>
           <View style={styles.card}>
             <SettingsItem
-              icon="🚪"
+              icon="logout"
               label="Wyloguj się"
               onPress={() => setConfirm('logout')}
               danger
             />
             <View style={styles.separator} />
             <SettingsItem
-              icon="🗑️"
+              icon="delete"
               label="Usuń konto"
               onPress={() => setConfirm('delete-1')}
               danger
@@ -258,7 +251,6 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
-  settingsIcon: { fontSize: 20 },
   settingsLabel: {
     flex: 1,
     fontFamily: Fonts.medium,

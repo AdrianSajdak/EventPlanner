@@ -9,6 +9,7 @@ import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { Button } from '../../components/common/Button';
+import { AppIcon } from '../../components/common/AppIcon';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { EventDetails } from '../../data/mockEvents';
 import { useEvents } from '../../context/EventsContext';
@@ -38,7 +39,7 @@ const InfoTab = ({ event, onResign, onShowParticipants }: InfoTabProps) => {
       </TouchableOpacity>
 
       <View style={styles.statCard}>
-        <Text style={styles.statIcon}>📅</Text>
+        <AppIcon name="calendar" size={22} color={Colors.actualMainBlue} />
         <View style={styles.statInfo}>
           <Text style={styles.statLabel}>Data i Godzina</Text>
           <Text style={styles.statValue}>{event.dateLabel}</Text>
@@ -46,7 +47,7 @@ const InfoTab = ({ event, onResign, onShowParticipants }: InfoTabProps) => {
       </View>
 
       <View style={styles.statCard}>
-        <Text style={styles.statIcon}>🛡️</Text>
+        <AppIcon name="profile" size={22} color={Colors.purpleAccent} />
         <View style={styles.statInfo}>
           <Text style={styles.statLabel}>Twoja Rola</Text>
           <Text style={styles.statValue}>Uczestnik</Text>
@@ -61,11 +62,11 @@ const InfoTab = ({ event, onResign, onShowParticipants }: InfoTabProps) => {
             <Text style={styles.locationCity}>{event.locationCity}</Text>
           </View>
           <TouchableOpacity style={styles.mapButton} activeOpacity={0.8}>
-            <Text>🗺️</Text>
+            <AppIcon name="localization" size={22} color={Colors.mainGraySecondary} />
           </TouchableOpacity>
         </View>
         <View style={styles.mapPlaceholder}>
-          <Text style={styles.mapText}>📍</Text>
+          <AppIcon name="localization" size={40} color={Colors.actualMainBlue} />
         </View>
       </View>
 
@@ -297,7 +298,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 3,
   },
-  statIcon: { fontSize: 20 },
   statInfo: { gap: 4 },
   statLabel: {
     fontFamily: Fonts.regular,
@@ -358,7 +358,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  mapText: { fontSize: 40 },
   votingCard: {
     backgroundColor: 'rgba(0,82,209,0.17)',
     borderWidth: 2,

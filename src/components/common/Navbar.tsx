@@ -4,6 +4,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
+import { AppIcon } from './AppIcon';
+import { GradientSurface } from './GradientSurface';
 
 interface NavbarProps {
   title: string;
@@ -36,14 +38,13 @@ export const Navbar: React.FC<NavbarProps> = ({
       onMenu();
       return;
     }
-    // Domyślnie kropki kierują do ekranu ustawień (zagnieżdżone w zakładce profile)
     navigation.navigate('profile', { screen: 'Settings' });
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, height: 60 + insets.top }]}>
+    <GradientSurface style={[styles.container, { paddingTop: insets.top, height: 60 + insets.top }]}>
       <TouchableOpacity onPress={onBack} style={styles.titleContainer} activeOpacity={0.7}>
-        {showBack && <Text style={styles.backArrow}>{'←  '}</Text>}
+        {showBack && <AppIcon name="arrowGoBack" size={24} color={Colors.white} />}
         <Text style={styles.title} numberOfLines={1}>{title}</Text>
       </TouchableOpacity>
       {showMenu && (
@@ -51,7 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <VerticalDots />
         </TouchableOpacity>
       )}
-    </View>
+    </GradientSurface>
   );
 };
 
@@ -62,7 +63,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    backgroundColor: Colors.secondaryDarkBlue,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
@@ -73,11 +73,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-  },
-  backArrow: {
-    color: Colors.white,
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.md,
+    gap: 12,
   },
   title: {
     color: Colors.white,

@@ -7,6 +7,7 @@ import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { Button } from '../../components/common/Button';
+import { AppIcon } from '../../components/common/AppIcon';
 import { ProfileStackParamList } from '../../navigation/ProfileNavigator';
 import { MOCK_HISTORICAL_EVENTS } from '../../data/mockEvents';
 
@@ -57,7 +58,7 @@ export default function UserProfileScreen({ navigation }: Props) {
               onPress={() => openHistoricalEvent(event.id)}
               activeOpacity={0.7}
             >
-              <Text style={styles.activityIcon}>🎭</Text>
+              <AppIcon name="cinema" size={24} color={Colors.purpleAccent} />
               <View style={styles.activityInfo}>
                 <Text style={styles.activityTitle}>{event.title}</Text>
                 <Text style={styles.activityDate}>{event.shortDate}</Text>
@@ -68,7 +69,7 @@ export default function UserProfileScreen({ navigation }: Props) {
         </View>
 
         <Button
-          label="⚙️  Ustawienia"
+          label="Ustawienia"
           variant="secondary"
           onPress={() => navigation.navigate('Settings')}
           style={styles.settingsBtn}
@@ -164,7 +165,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.divider,
   },
-  activityIcon: { fontSize: 24 },
   activityInfo: { flex: 1, gap: 2 },
   activityArrow: {
     fontFamily: Fonts.bold,
