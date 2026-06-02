@@ -34,7 +34,11 @@ const SectionTitle: React.FC<SectionTitleProps> = ({ label, collapsed, onToggle 
     onPress={onToggle}
     activeOpacity={0.7}
   >
-    <Text style={styles.sectionArrow}>{collapsed ? '▶' : '▼'}</Text>
+    <AppIcon
+      name={collapsed ? 'polygon' : 'polygonUp'}
+      size={15}
+      color={Colors.actualMainBlue}
+    />
     <Text style={styles.sectionText}>{label}</Text>
   </TouchableOpacity>
 );
@@ -197,11 +201,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5,
-  },
-  sectionArrow: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.base,
-    color: Colors.actualMainBlue,
   },
   sectionText: {
     fontFamily: Fonts.bold,
