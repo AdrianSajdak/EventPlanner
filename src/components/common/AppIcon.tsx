@@ -39,6 +39,7 @@ export type AppIconName =
   | 'poll'
   | 'profile'
   | 'polygon'
+  | 'polygonUp'
   | 'role'
   | 'rocket'
   | 'send'
@@ -79,6 +80,7 @@ const iconSources: Record<AppIconName, ImageSourcePropType> = {
   poll: require('../../../assets/icons/poll.png'),
   profile: require('../../../assets/icons/profile.png'),
   polygon: require('../../../assets/icons/Polygon 1.png'),
+  polygonUp: require('../../../assets/icons/Polygon 2.png'),
   role: require('../../../assets/icons/role.png'),
   rocket: require('../../../assets/icons/rocket.png'),
   send: require('../../../assets/icons/send.png'),
