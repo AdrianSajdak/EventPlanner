@@ -8,6 +8,7 @@ import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { Button } from '../../components/common/Button';
+import { AppIcon } from '../../components/common/AppIcon';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { useEvents } from '../../context/EventsContext';
 import { logEventCancelled } from '../../services/analytics';
@@ -47,7 +48,7 @@ export default function CancelEventScreen({ navigation, route }: Props) {
       />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.warningCard}>
-          <Text style={styles.warningIcon}>⚠️</Text>
+          <AppIcon name="deletedEvent" size={32} color={Colors.errorRed} />
           <Text style={styles.warningTitle}>Odwołanie wydarzenia</Text>
           <Text style={styles.warningText}>
             Ta akcja jest nieodwracalna. Wszyscy uczestnicy zostaną powiadomieni o odwołaniu
@@ -117,7 +118,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  warningIcon: { fontSize: 32 },
   warningTitle: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes.lg,

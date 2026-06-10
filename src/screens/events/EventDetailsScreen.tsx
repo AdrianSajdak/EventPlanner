@@ -9,11 +9,14 @@ import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { Button } from '../../components/common/Button';
+import { AppIcon } from '../../components/common/AppIcon';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { EventDetails } from '../../data/mockEvents';
 import { useEvents } from '../../context/EventsContext';
 import { MOCK_FRIENDS } from '../../data/mockFriends';
 import { logEventLeft } from '../../services/analytics';
+
+const mapImage = require('../../../assets/images/event-map.png');
 
 type Tab = 'info' | 'planning' | 'chat';
 
@@ -34,11 +37,11 @@ const InfoTab = ({ event, onResign, onShowParticipants }: InfoTabProps) => {
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.tabContent}>
       <TouchableOpacity style={styles.resignButton} activeOpacity={0.8} onPress={onResign}>
         <Text style={styles.resignText}>Zrezygnuj</Text>
-        <Text style={styles.resignArrow}> →</Text>
+        <AppIcon name="arrowContinue" size={22} color={Colors.white} />
       </TouchableOpacity>
 
       <View style={styles.statCard}>
-        <Text style={styles.statIcon}>📅</Text>
+        <AppIcon name="calendar" size={22} color={Colors.actualMainBlue} />
         <View style={styles.statInfo}>
           <Text style={styles.statLabel}>Data i Godzina</Text>
           <Text style={styles.statValue}>{event.dateLabel}</Text>
@@ -46,7 +49,7 @@ const InfoTab = ({ event, onResign, onShowParticipants }: InfoTabProps) => {
       </View>
 
       <View style={styles.statCard}>
-        <Text style={styles.statIcon}>🛡️</Text>
+        <AppIcon name="role" size={22} color={Colors.purpleAccent} />
         <View style={styles.statInfo}>
           <Text style={styles.statLabel}>Twoja Rola</Text>
           <Text style={styles.statValue}>Uczestnik</Text>
@@ -61,12 +64,10 @@ const InfoTab = ({ event, onResign, onShowParticipants }: InfoTabProps) => {
             <Text style={styles.locationCity}>{event.locationCity}</Text>
           </View>
           <TouchableOpacity style={styles.mapButton} activeOpacity={0.8}>
-            <Text>🗺️</Text>
+            <AppIcon name="meetingLocation" size={24} color={Colors.mainGraySecondary} />
           </TouchableOpacity>
         </View>
-        <View style={styles.mapPlaceholder}>
-          <Text style={styles.mapText}>📍</Text>
-        </View>
+        <Image source={mapImage} style={styles.mapImage} />
       </View>
 
       <View style={styles.votingCard}>
@@ -145,8 +146,8 @@ export default function EventDetailsScreen({ navigation, route }: Props) {
             style={[styles.tabItem, activeTab === tab && styles.activeTabItem]}
             onPress={() => {
               setActiveTab(tab);
-              if (tab === 'chat') navigation.navigate('Chat', { eventId });
-              if (tab === 'planning') navigation.navigate('Planning', { eventId });
+              if (tab === 'chat') navigation.navigate('Chat', { eventId, isOrganizer: false });
+              if (tab === 'planning') navigation.navigate('Planning', { eventId, isOrganizer: false });
             }}
             activeOpacity={0.7}
           >
@@ -216,27 +217,28 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.lightModeMainTheme },
   tabBar: {
     flexDirection: 'row',
+    marginHorizontal: 28,
+    marginTop: 24,
+    marginBottom: 24,
     borderTopWidth: 2,
     borderBottomWidth: 2,
     borderColor: Colors.secondaryDarkBlue,
-    paddingHorizontal: 4,
-    paddingVertical: 8,
-    gap: 4,
+    paddingVertical: 6,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
+    minHeight: 36,
     borderRadius: 4,
     position: 'relative',
   },
   activeTabItem: {
-    backgroundColor: Colors.navbarFocus,
+    backgroundColor: '#DCE4EF',
   },
   tabLabel: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.base,
+    fontFamily: Fonts.bold,
+    fontSize: 14,
     color: Colors.secondaryDarkBlue,
     textAlign: 'center',
   },
@@ -245,17 +247,17 @@ const styles = StyleSheet.create({
   },
   tabBadge: {
     position: 'absolute',
-    top: 4,
-    right: 6,
+    top: 2,
+    right: 15,
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: Colors.errorRed,
   },
   tabContent: {
-    padding: 24,
+    paddingHorizontal: 26,
     gap: 24,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   resignButton: {
     alignSelf: 'flex-end',
@@ -263,8 +265,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.graySecondary,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     shadowColor: Colors.graySecondary,
     shadowOffset: { width: 4, height: 4 },
     shadowOpacity: 1,
@@ -272,36 +274,32 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   resignText: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.md,
+    fontFamily: Fonts.bold,
+    fontSize: 16,
     color: Colors.offWhite,
     lineHeight: 16,
-  },
-  resignArrow: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.md,
-    color: Colors.offWhite,
   },
   statCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 24,
+    gap: 22,
     backgroundColor: Colors.offWhite,
     borderWidth: 2,
     borderColor: Colors.secondaryDarkBlue,
     borderRadius: 4,
-    padding: 20,
+    minHeight: 66,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
     shadowColor: Colors.graySecondary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
+    shadowOffset: { width: 4, height: 5 },
+    shadowOpacity: 0.65,
     shadowRadius: 2,
     elevation: 3,
   },
-  statIcon: { fontSize: 20 },
   statInfo: { gap: 4 },
   statLabel: {
     fontFamily: Fonts.regular,
-    fontSize: FontSizes.md,
+    fontSize: 16,
     color: Colors.graySecondary,
     lineHeight: 16,
   },
@@ -327,7 +325,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    padding: 20,
+    paddingHorizontal: 19,
+    paddingTop: 20,
+    paddingBottom: 18,
   },
   locationTitle: {
     fontFamily: Fonts.semiBold,
@@ -352,13 +352,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
   },
-  mapPlaceholder: {
+  mapImage: {
+    width: '100%',
     height: 160,
-    backgroundColor: Colors.cardGray,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  mapText: { fontSize: 40 },
   votingCard: {
     backgroundColor: 'rgba(0,82,209,0.17)',
     borderWidth: 2,
@@ -367,8 +364,8 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
     shadowColor: Colors.graySecondary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
+    shadowOffset: { width: 3, height: 4 },
+    shadowOpacity: 0.55,
     shadowRadius: 2,
     elevation: 2,
   },
@@ -434,14 +431,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   participantsTitle: {
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.md,
+    fontFamily: Fonts.bold,
+    fontSize: 18,
     color: Colors.black,
     lineHeight: 24,
   },
   seeAll: {
     fontFamily: Fonts.bold,
-    fontSize: FontSizes.base,
+    fontSize: 14,
     color: Colors.actualMainBlue,
     lineHeight: 20,
   },

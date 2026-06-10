@@ -1,17 +1,18 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import EventsNavigator from './EventsNavigator';
-import FriendsNavigator from './FriendsNavigator';
+import { NavigatorScreenParams } from '@react-navigation/native';
+import EventsNavigator, { EventsStackParamList } from './EventsNavigator';
+import FriendsNavigator, { FriendsStackParamList } from './FriendsNavigator';
 import NotificationsScreen from '../screens/notifications/NotificationsScreen';
-import ProfileNavigator from './ProfileNavigator';
+import ProfileNavigator, { ProfileStackParamList } from './ProfileNavigator';
 import { BottomNavBar } from '../components/common/BottomNavBar';
 
 // typy dla zakładek 
 export type MainTabParamList = {
-  events: undefined;
-  friends: undefined;
+  events: NavigatorScreenParams<EventsStackParamList> | undefined;
+  friends: NavigatorScreenParams<FriendsStackParamList> | undefined;
   notifications: undefined;
-  profile: undefined;
+  profile: NavigatorScreenParams<ProfileStackParamList> | undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -22,7 +23,21 @@ export default function MainNavigator() {
       tabBar={(props) => (
         <BottomNavBar 
           activeTab={props.state.routeNames[props.state.index] as any}
-          onTabPress={(tab) => props.navigation.navigate(tab)}
+          onTabPress={(tab) => {
+            if (tab === 'events') {
+              props.navigation.navigate('events', { screen: 'Dashboard' });
+              return;
+            }
+            if (tab === 'profile') {
+              props.navigation.navigate('profile', { screen: 'UserProfile' });
+              return;
+            }
+            if (tab === 'friends') {
+              props.navigation.navigate('friends', { screen: 'Friends' });
+              return;
+            }
+            props.navigation.navigate(tab);
+          }}
           notificationCount={1} // zaciąga dane ze stanu/API
         />
       )}

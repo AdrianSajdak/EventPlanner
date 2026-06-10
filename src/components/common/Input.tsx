@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
+import { AppIcon } from './AppIcon';
 
 interface InputProps extends TextInputProps {
   label: string;
@@ -45,7 +46,11 @@ export const Input: React.FC<InputProps> = ({
             style={styles.rightIcon}
             onPress={() => setShowPassword((v) => !v)}
           >
-            <Text style={styles.eyeIcon}>{showPassword ? '👁' : '👁‍🗨'}</Text>
+            <AppIcon
+              name="eye"
+              size={18}
+              color={showPassword ? Colors.actualMainBlue : Colors.secondaryDarkBlue}
+            />
           </TouchableOpacity>
         )}
         {rightIcon && !isPassword && <View style={styles.rightIcon}>{rightIcon}</View>}
@@ -96,8 +101,5 @@ const styles = StyleSheet.create({
     minWidth: 56,
     alignItems: 'center', 
     justifyContent: 'center', 
-  },
-  eyeIcon: {
-    fontSize: 16,
   },
 });

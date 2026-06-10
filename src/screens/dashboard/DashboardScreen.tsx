@@ -12,6 +12,7 @@ import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { EventCard, EventCardData } from '../../components/common/EventCard';
+import { AppIcon } from '../../components/common/AppIcon';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { MOCK_PENDING_CARDS } from '../../data/mockEvents';
 import { useEvents } from '../../context/EventsContext';
@@ -33,7 +34,11 @@ const SectionTitle: React.FC<SectionTitleProps> = ({ label, collapsed, onToggle 
     onPress={onToggle}
     activeOpacity={0.7}
   >
-    <Text style={styles.sectionArrow}>{collapsed ? '▶' : '▼'}</Text>
+    <AppIcon
+      name={collapsed ? 'polygon' : 'polygonUp'}
+      size={15}
+      color={Colors.actualMainBlue}
+    />
     <Text style={styles.sectionText}>{label}</Text>
   </TouchableOpacity>
 );
@@ -150,7 +155,7 @@ export default function DashboardScreen({ navigation }: Props) {
         onPress={() => navigation.navigate('NewEvent')}
         activeOpacity={0.85}
       >
-        <Text style={styles.fabIcon}>+</Text>
+        <AppIcon name="add" size={24} color={Colors.white} />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -197,11 +202,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 5,
   },
-  sectionArrow: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.base,
-    color: Colors.actualMainBlue,
-  },
   sectionText: {
     fontFamily: Fonts.bold,
     fontSize: 15,
@@ -225,12 +225,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 16,
     elevation: 8,
-  },
-  fabIcon: {
-    color: Colors.white,
-    fontSize: 28,
-    fontFamily: Fonts.bold,
-    lineHeight: 32,
   },
   bottomPadding: { height: 80 },
 });

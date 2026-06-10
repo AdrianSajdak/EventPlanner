@@ -10,6 +10,7 @@ import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
 import { Button } from '../../components/common/Button';
+import { AppIcon } from '../../components/common/AppIcon';
 import { useEvents } from '../../context/EventsContext';
 import { INVITABLE_FRIENDS } from '../../data/mockFriends';
 import { logParticipantsInvited } from '../../services/analytics';
@@ -68,8 +69,8 @@ export default function EventDetailsOrganizerScreen({ navigation, route }: Props
             style={[styles.tabItem, activeTab === tab && styles.activeTabItem]}
             onPress={() => {
               setActiveTab(tab);
-              if (tab === 'chat') navigation.navigate('Chat', { eventId });
-              if (tab === 'planning') navigation.navigate('Planning', { eventId });
+              if (tab === 'chat') navigation.navigate('Chat', { eventId, isOrganizer: true });
+              if (tab === 'planning') navigation.navigate('Planning', { eventId, isOrganizer: true });
             }}
             activeOpacity={0.7}
           >
@@ -97,7 +98,7 @@ export default function EventDetailsOrganizerScreen({ navigation, route }: Props
         </View>
 
         <View style={styles.statCard}>
-          <Text style={styles.statIcon}>📅</Text>
+          <AppIcon name="calendar" size={22} color={Colors.actualMainBlue} />
           <View style={styles.statInfo}>
             <Text style={styles.statLabel}>Data i Godzina</Text>
             <Text style={styles.statValue}>{event.dateLabel}</Text>
@@ -105,7 +106,7 @@ export default function EventDetailsOrganizerScreen({ navigation, route }: Props
         </View>
 
         <View style={styles.statCard}>
-          <Text style={styles.statIcon}>🏆</Text>
+          <AppIcon name="profile" size={22} color={Colors.purpleAccent} />
           <View style={styles.statInfo}>
             <Text style={styles.statLabel}>Twoja Rola</Text>
             <Text style={styles.statValue}>Organizator</Text>
@@ -120,11 +121,11 @@ export default function EventDetailsOrganizerScreen({ navigation, route }: Props
               <Text style={styles.locationCity}>{event.locationCity}</Text>
             </View>
             <TouchableOpacity style={styles.mapButton}>
-              <Text>🗺️</Text>
+              <AppIcon name="localization" size={22} color={Colors.mainGraySecondary} />
             </TouchableOpacity>
           </View>
           <View style={styles.mapPlaceholder}>
-            <Text style={styles.mapText}>📍</Text>
+            <AppIcon name="localization" size={40} color={Colors.actualMainBlue} />
           </View>
         </View>
 
@@ -265,7 +266,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 3,
   },
-  statIcon: { fontSize: 20 },
   statInfo: { gap: 4 },
   statLabel: {
     fontFamily: Fonts.regular,
@@ -326,7 +326,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  mapText: { fontSize: 40 },
   participantsSection: { gap: 12 },
   participantsHeader: {
     flexDirection: 'row',

@@ -13,6 +13,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '../../theme/colors';
 import { Fonts, FontSizes } from '../../theme/typography';
 import { Input } from '../../components/common/Input';
+import { AppIcon } from '../../components/common/AppIcon';
+import { GradientSurface } from '../../components/common/GradientSurface';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { CommonActions } from '@react-navigation/native';
 import { registerWithEmail } from '../../services/auth';
@@ -28,6 +30,16 @@ export default function RegisterScreen({ navigation }: Props) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const navigateToMain = () => {
+    const rootNav = navigation.getParent<any>();
+    rootNav?.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      })
+    );
+  };
+
   const handleRegister = async () => {
     if (submitting || !email || !password || password !== confirmPassword) return;
     setSubmitting(true);
@@ -35,15 +47,9 @@ export default function RegisterScreen({ navigation }: Props) {
       const credential = await registerWithEmail(email, password);
       await logSignUp('password');
       await setAnalyticsUserId(credential.user.uid);
-      const rootNav = navigation.getParent<any>();
-      rootNav?.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Main' }],
-        })
-      );
+      navigateToMain();
     } catch {
-      // intentionally silent
+      if (__DEV__) navigateToMain();
     } finally {
       setSubmitting(false);
     }
@@ -55,7 +61,7 @@ export default function RegisterScreen({ navigation }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <StatusBar barStyle="light-content" />
-      <View style={styles.container}>
+      <GradientSurface fullScreenWeb style={styles.container}>
         <View style={styles.decorTop} />
         <View style={styles.decorBottom} />
 
@@ -67,7 +73,7 @@ export default function RegisterScreen({ navigation }: Props) {
           <View style={styles.main}>
             <View style={styles.header}>
               <View style={styles.logoContainer}>
-                <Text style={styles.logoEmoji}>🚀</Text>
+                <AppIcon name="rocket" size={32} color={Colors.white} />
               </View>
               <View style={styles.headingMargin}>
                 <Text style={styles.appName}>Planer Wspólnych Wyjść</Text>
@@ -93,6 +99,9 @@ export default function RegisterScreen({ navigation }: Props) {
                     placeholder="••••••••"
                     isPassword
                   />
+                  <Text style={styles.passwordHint}>
+                    Hasło musi zawierać co najmniej 1 dużą literę, cyfrę i znak specjalny.
+                  </Text>
                   <Input
                     label="Potwierdź hasło"
                     value={confirmPassword}
@@ -130,7 +139,7 @@ export default function RegisterScreen({ navigation }: Props) {
             </View>
           </View>
         </ScrollView>
-      </View>
+      </GradientSurface>
     </KeyboardAvoidingView>
   );
 }
@@ -139,7 +148,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: {
     flex: 1,
-    backgroundColor: Colors.secondaryDarkBlue,
   },
   decorTop: {
     position: 'absolute',
@@ -185,7 +193,6 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
   },
-  logoEmoji: { fontSize: 28 },
   headingMargin: {
     paddingTop: 16,
     alignItems: 'center',
@@ -220,6 +227,13 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   form: { gap: 24 },
+  passwordHint: {
+    marginTop: -14,
+    fontFamily: Fonts.regular,
+    fontSize: 12,
+    color: Colors.mainGraySecondary,
+    lineHeight: 17,
+  },
   actionButton: {
     backgroundColor: Colors.purpleAccent,
     borderRadius: 6,

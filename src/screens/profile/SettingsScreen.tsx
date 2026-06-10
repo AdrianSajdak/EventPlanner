@@ -1,49 +1,80 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Modal,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView,
 } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
-import { Button } from '../../components/common/Button';
-import { deleteCurrentAccount, logout } from '../../services/auth';
-import { logAccountDeleted, logLogout, setAnalyticsUserId } from '../../services/analytics';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors } from '../../theme/colors';
-import { Fonts, FontSizes } from '../../theme/typography';
+import { AppIcon } from '../../components/common/AppIcon';
 import { Navbar } from '../../components/common/Navbar';
+import { logout } from '../../services/auth';
+import { logLogout, setAnalyticsUserId } from '../../services/analytics';
+import { Colors } from '../../theme/colors';
+import { Fonts } from '../../theme/typography';
 import { ProfileStackParamList } from '../../navigation/ProfileNavigator';
 
 type Props = {
   navigation: NativeStackNavigationProp<ProfileStackParamList, 'Settings'>;
 };
 
-const SettingsItem = ({
-  icon,
-  label,
+type PushKey = 'eventChange' | 'replyReminder' | 'newInvite' | 'chatMessages';
+
+const PushToggle = ({
+  enabled,
   onPress,
-  danger,
 }: {
-  icon: string;
-  label: string;
+  enabled: boolean;
   onPress: () => void;
-  danger?: boolean;
 }) => (
-  <TouchableOpacity style={styles.settingsItem} onPress={onPress} activeOpacity={0.7}>
-    <Text style={styles.settingsIcon}>{icon}</Text>
-    <Text style={[styles.settingsLabel, danger && styles.dangerText]}>{label}</Text>
-    <Text style={styles.arrow}>›</Text>
+  <TouchableOpacity
+    style={styles.switchTrack}
+    onPress={onPress}
+    activeOpacity={0.8}
+    accessibilityRole="switch"
+    accessibilityState={{ checked: enabled }}
+  >
+    <View style={[styles.switchThumb, enabled ? styles.switchThumbOn : styles.switchThumbOff]}>
+      <AppIcon
+        name={enabled ? 'notificationSwitch' : 'notificationSilentSwitch'}
+        size={18}
+        color={Colors.white}
+      />
+    </View>
   </TouchableOpacity>
 );
 
-type ConfirmKind = 'logout' | 'delete-1' | 'delete-2' | null;
+const AccountLink = ({
+  label,
+  onPress,
+}: {
+  label: string;
+  onPress: () => void;
+}) => (
+  <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.accountLink}>
+    <Text style={styles.accountLinkText}>{label}</Text>
+  </TouchableOpacity>
+);
 
 export default function SettingsScreen({ navigation }: Props) {
-  const [confirm, setConfirm] = useState<ConfirmKind>(null);
-  const [deleteChecked, setDeleteChecked] = useState(false);
+  const [pushSettings, setPushSettings] = useState<Record<PushKey, boolean>>({
+    eventChange: true,
+    replyReminder: true,
+    newInvite: false,
+    chatMessages: false,
+  });
 
-  const resetToAuth = () => {
-    setConfirm(null);
-    setDeleteChecked(false);
-    const rootNav = navigation.getParent<any>()?.getParent<any>();
+  const togglePush = (key: PushKey) =>
+    setPushSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const handleLogout = async () => {
+    try {
+      await logLogout();
+      await logout();
+      await setAnalyticsUserId(null);
+    } catch {
+      // intentionally silent
+    }
+
+    const rootNav = navigation.getParent()?.getParent();
     rootNav?.dispatch(
       CommonActions.reset({
         index: 0,
@@ -52,301 +83,157 @@ export default function SettingsScreen({ navigation }: Props) {
     );
   };
 
-  const handleLogoutConfirmed = async () => {
-    try {
-      await logLogout();
-      await logout();
-      await setAnalyticsUserId(null);
-    } catch {
-      // intentionally silent
-    }
-    resetToAuth();
-  };
-
-  const handleDeleteConfirmed = async () => {
-    try {
-      await logAccountDeleted();
-      await deleteCurrentAccount();
-      await setAnalyticsUserId(null);
-    } catch {
-      // intentionally silent
-    }
-    resetToAuth();
-  };
-
-  const closeConfirm = () => {
-    setConfirm(null);
-    setDeleteChecked(false);
-  };
-
-  const confirmContent: Record<
-    Exclude<ConfirmKind, null>,
-    {
-      title: string;
-      message: string;
-      primaryLabel: string;
-      onPrimary: () => void;
-      primaryDisabled?: boolean;
-    }
-  > = {
-    logout: {
-      title: 'Wyloguj się',
-      message: 'Czy na pewno chcesz się wylogować?',
-      primaryLabel: 'Wyloguj',
-      onPrimary: handleLogoutConfirmed,
-    },
-    'delete-1': {
-      title: 'Usuń konto',
-      message:
-        'Tej akcji nie da się cofnąć. Wszystkie Twoje dane zostaną trwale usunięte. Czy na pewno chcesz kontynuować?',
-      primaryLabel: 'Dalej',
-      onPrimary: () => setConfirm('delete-2'),
-    },
-    'delete-2': {
-      title: 'Ostateczne potwierdzenie',
-      message:
-        'Potwierdź, że rozumiesz konsekwencje. Po usunięciu konta nie odzyskasz danych ani historii wydarzeń.',
-      primaryLabel: 'Tak, usuń konto',
-      onPrimary: handleDeleteConfirmed,
-      primaryDisabled: !deleteChecked,
-    },
-  };
-
   return (
     <SafeAreaView style={styles.safe}>
       <Navbar title="Ustawienia" showBack onBack={() => navigation.goBack()} showMenu={false} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
+        <View style={styles.pushSection}>
+          <Text style={styles.sectionTitle}>Powiadomienia push</Text>
+
+          <View style={styles.pushRow}>
+            <Text style={styles.pushLabel}>Zmiana wydarzenia</Text>
+            <PushToggle
+              enabled={pushSettings.eventChange}
+              onPress={() => togglePush('eventChange')}
+            />
+          </View>
+
+          <View style={styles.pushRow}>
+            <Text style={styles.pushLabel}>Przypomnij mi o odpowiedzi{'\n'}po 24 godzinach</Text>
+            <PushToggle
+              enabled={pushSettings.replyReminder}
+              onPress={() => togglePush('replyReminder')}
+            />
+          </View>
+
+          <View style={styles.pushRow}>
+            <Text style={styles.pushLabel}>Nowe zaproszenie</Text>
+            <PushToggle
+              enabled={pushSettings.newInvite}
+              onPress={() => togglePush('newInvite')}
+            />
+          </View>
+
+          <View style={styles.pushRow}>
+            <Text style={styles.pushLabel}>Wiadomości z czatu</Text>
+            <PushToggle
+              enabled={pushSettings.chatMessages}
+              onPress={() => togglePush('chatMessages')}
+            />
+          </View>
+        </View>
+
+        <View style={styles.accountSection}>
           <Text style={styles.sectionTitle}>Konto</Text>
-          <View style={styles.card}>
-            <SettingsItem
-              icon="📧"
-              label="Zmień adres e-mail"
-              onPress={() => navigation.navigate('ChangeEmail')}
-            />
-            <View style={styles.separator} />
-            <SettingsItem
-              icon="🔒"
-              label="Zmień hasło"
-              onPress={() => navigation.navigate('ChangePassword')}
-            />
-            <View style={styles.separator} />
-            <SettingsItem
-              icon="👤"
-              label="Zmień dane personalne"
-              onPress={() => navigation.navigate('ChangePersonalData')}
-            />
-          </View>
+          <AccountLink
+            label="Zmień adres e-mail"
+            onPress={() => navigation.navigate('ChangeEmail')}
+          />
+          <AccountLink
+            label="Zmień hasło"
+            onPress={() => navigation.navigate('ChangePassword')}
+          />
+          <AccountLink
+            label="Zmień swoje dane"
+            onPress={() => navigation.navigate('ChangePersonalData')}
+          />
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Aplikacja</Text>
-          <View style={styles.card}>
-            <SettingsItem
-              icon="🌐"
-              label="Język"
-              onPress={() => navigation.navigate('Language')}
-            />
-            <View style={styles.separator} />
-            <SettingsItem
-              icon="🎨"
-              label="Motyw"
-              onPress={() => navigation.navigate('Theme')}
-            />
-            <View style={styles.separator} />
-            <SettingsItem
-              icon="ℹ️"
-              label="O aplikacji"
-              onPress={() => navigation.navigate('About')}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.card}>
-            <SettingsItem
-              icon="🚪"
-              label="Wyloguj się"
-              onPress={() => setConfirm('logout')}
-              danger
-            />
-            <View style={styles.separator} />
-            <SettingsItem
-              icon="🗑️"
-              label="Usuń konto"
-              onPress={() => setConfirm('delete-1')}
-              danger
-            />
-          </View>
-        </View>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.75}>
+          <AppIcon name="logout" size={28} color={Colors.black} />
+          <Text style={styles.logoutText}>Wyloguj się</Text>
+        </TouchableOpacity>
       </ScrollView>
-
-      <Modal
-        visible={confirm !== null}
-        animationType="fade"
-        transparent
-        onRequestClose={closeConfirm}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            {confirm && (
-              <>
-                <Text style={styles.modalTitle}>{confirmContent[confirm].title}</Text>
-                <Text style={styles.modalMessage}>{confirmContent[confirm].message}</Text>
-
-                {confirm === 'delete-2' && (
-                  <TouchableOpacity
-                    style={styles.checkboxRow}
-                    onPress={() => setDeleteChecked((v) => !v)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.checkbox, deleteChecked && styles.checkboxChecked]}>
-                      {deleteChecked && <Text style={styles.checkmark}>✓</Text>}
-                    </View>
-                    <Text style={styles.checkboxLabel}>
-                      Rozumiem, że tej operacji nie można odwrócić
-                    </Text>
-                  </TouchableOpacity>
-                )}
-
-                <View style={styles.modalActions}>
-                  <Button
-                    label="Anuluj"
-                    variant="secondary"
-                    onPress={closeConfirm}
-                    style={styles.modalBtn}
-                  />
-                  <Button
-                    label={confirmContent[confirm].primaryLabel}
-                    variant="primary"
-                    onPress={confirmContent[confirm].onPrimary}
-                    disabled={confirmContent[confirm].primaryDisabled}
-                    style={styles.modalBtn}
-                  />
-                </View>
-              </>
-            )}
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.lightModeMainTheme },
-  content: { padding: 24, gap: 20, paddingBottom: 40 },
-  section: { gap: 8 },
-  sectionTitle: {
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.base,
-    color: Colors.mainGraySecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    paddingLeft: 4,
+  content: {
+    paddingTop: 28,
+    paddingHorizontal: 28,
+    paddingBottom: 120,
   },
-  card: {
-    backgroundColor: Colors.offWhite,
-    borderRadius: 8,
+  pushSection: {
+    gap: 18,
+  },
+  accountSection: {
+    marginTop: 28,
+  },
+  sectionTitle: {
+    fontFamily: Fonts.bold,
+    fontSize: 24,
+    color: Colors.black,
+    lineHeight: 30,
+    marginBottom: 12,
+  },
+  pushRow: {
+    minHeight: 31,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  pushLabel: {
+    flex: 1,
+    fontFamily: Fonts.regular,
+    fontSize: 18,
+    color: Colors.secondaryDarkBlue,
+    lineHeight: 29,
+  },
+  switchTrack: {
+    width: 80,
+    height: 30,
+    borderRadius: 6,
     borderWidth: 2,
     borderColor: Colors.secondaryDarkBlue,
+    backgroundColor: Colors.secondaryDarkBlue,
+    shadowColor: Colors.graySecondary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.9,
+    shadowRadius: 3,
+    elevation: 4,
     overflow: 'hidden',
   },
-  settingsItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    gap: 12,
-  },
-  settingsIcon: { fontSize: 20 },
-  settingsLabel: {
-    flex: 1,
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.base,
-    color: Colors.black,
-  },
-  dangerText: { color: '#D32F2F' },
-  arrow: {
-    fontFamily: Fonts.bold,
-    fontSize: 20,
-    color: Colors.mainGraySecondary,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: Colors.divider,
-    marginHorizontal: 16,
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+  switchThumb: {
+    position: 'absolute',
+    top: 0,
+    width: 42,
+    height: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
   },
-  modalCard: {
-    width: '100%',
-    maxWidth: 420,
-    backgroundColor: Colors.offWhite,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: Colors.secondaryDarkBlue,
-    padding: 24,
-    gap: 12,
+  switchThumbOn: {
+    left: 0,
+    backgroundColor: Colors.purpleAccent,
   },
-  modalTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.lg,
-    color: Colors.secondaryDarkBlue,
+  switchThumbOff: {
+    right: 0,
+    backgroundColor: Colors.graySecondary,
   },
-  modalMessage: {
+  accountLink: {
+    paddingVertical: 8,
+  },
+  accountLinkText: {
     fontFamily: Fonts.regular,
-    fontSize: FontSizes.base,
-    color: Colors.black,
-    lineHeight: 22,
+    fontSize: 18,
+    color: Colors.secondaryDarkBlue,
+    lineHeight: 25,
   },
-  checkboxRow: {
+  logoutButton: {
+    marginTop: 78,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 4,
+    gap: 10,
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: Colors.secondaryDarkBlue,
-    backgroundColor: Colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: Colors.actualMainBlue,
-    borderColor: Colors.actualMainBlue,
-  },
-  checkmark: {
+  logoutText: {
     fontFamily: Fonts.bold,
-    fontSize: 14,
-    color: Colors.white,
-    lineHeight: 16,
-  },
-  checkboxLabel: {
-    flex: 1,
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.sm,
+    fontSize: 24,
     color: Colors.black,
-    lineHeight: 18,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.divider,
-  },
-  modalBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    lineHeight: 30,
   },
 });
