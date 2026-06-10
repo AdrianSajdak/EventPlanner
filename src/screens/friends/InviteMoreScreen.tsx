@@ -1,157 +1,108 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity,
-  SafeAreaView, TextInput,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { Colors } from '../../theme/colors';
-import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
-import { Button } from '../../components/common/Button';
+import {
+  PrimaryWideButton,
+  SearchBox,
+  SelectableRow,
+} from '../../components/friends/FriendsUi';
 import { FriendsStackParamList } from '../../navigation/FriendsNavigator';
+import { EventsStackParamList } from '../../navigation/EventsNavigator';
+import { Colors } from '../../theme/colors';
+import { Fonts } from '../../theme/typography';
 
 type Props = {
-  navigation: NativeStackNavigationProp<FriendsStackParamList, 'InviteMore'>;
-  route: RouteProp<FriendsStackParamList, 'InviteMore'>;
+  navigation: NativeStackNavigationProp<
+    FriendsStackParamList & EventsStackParamList,
+    'InviteMore'
+  >;
+  route: RouteProp<FriendsStackParamList & EventsStackParamList, 'InviteMore'>;
 };
 
-const CONTACTS = [
-  { id: '1', name: 'Anna Kowalska' },
-  { id: '2', name: 'Marek Nowak' },
-  { id: '3', name: 'Piotr Wiśniewski' },
-  { id: '4', name: 'Kasia Zielińska' },
-  { id: '5', name: 'Tomek Wójcik' },
-  { id: '6', name: 'Ola Krawczyk' },
+const friends = [
+  { id: 'friend-1', name: 'Michał Nowak' },
+  { id: 'friend-2', name: 'Jan Kowalski' },
+  { id: 'friend-3', name: 'Anna Wiśniewska' },
+  { id: 'friend-4', name: 'Paweł Kowalski' },
+];
+
+const lists = [
+  { id: 'list-1', title: 'Kino', subtitle: 'Agnieszka Holland, Daniel Olbrychski' },
+  { id: 'list-2', title: 'Kino', subtitle: 'Agnieszka Holland, Daniel Olbrychski' },
+  { id: 'list-3', title: 'Kino', subtitle: 'Agnieszka Holland, Daniel Olbrychski' },
 ];
 
 export default function InviteMoreScreen({ navigation }: Props) {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
 
-  const filtered = CONTACTS.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase())
-  );
-
   const toggle = (id: string) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    setSelected((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
     );
   };
 
   return (
     <SafeAreaView style={styles.safe}>
       <Navbar title="Zaproś więcej" showBack onBack={() => navigation.goBack()} />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <SearchBox value={search} onChangeText={setSearch} />
 
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Szukaj znajomych..."
-          placeholderTextColor={Colors.mainGraySecondary}
-        />
-      </View>
-
-      {selected.length > 0 && (
-        <View style={styles.selectedBar}>
-          <Text style={styles.selectedText}>Wybrano: {selected.length}</Text>
-          <Button
-            label="Zaproś"
-            variant="primary"
-            onPress={() => navigation.goBack()}
-            style={styles.inviteBtn}
-          />
+        <Text style={styles.sectionTitle}>Znajomi</Text>
+        <View style={styles.stack}>
+          {friends.map((friend) => (
+            <SelectableRow
+              key={friend.id}
+              title={friend.name}
+              selected={selected.includes(friend.id)}
+              onPress={() => toggle(friend.id)}
+            />
+          ))}
         </View>
-      )}
 
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.contactItem, selected.includes(item.id) && styles.contactItemSelected]}
-            onPress={() => toggle(item.id)}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.avatar, selected.includes(item.id) && styles.avatarSelected]}>
-              <Text style={styles.avatarInitial}>
-                {selected.includes(item.id) ? '✓' : item.name[0]}
-              </Text>
-            </View>
-            <Text style={styles.contactName}>{item.name}</Text>
-          </TouchableOpacity>
-        )}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-      />
+        <Text style={styles.sectionTitle}>Listy znajomych</Text>
+        <View style={styles.stack}>
+          {lists.map((list) => (
+            <SelectableRow
+              key={list.id}
+              title={list.title}
+              subtitle={list.subtitle}
+              selected={selected.includes(list.id)}
+              onPress={() => toggle(list.id)}
+            />
+          ))}
+        </View>
+
+        <PrimaryWideButton label="Zaproś" onPress={() => navigation.goBack()} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.lightModeMainTheme },
-  searchContainer: { paddingHorizontal: 24, paddingVertical: 12 },
-  searchInput: {
-    backgroundColor: Colors.offWhite,
-    borderWidth: 2,
-    borderColor: Colors.secondaryDarkBlue,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.base,
-    color: Colors.black,
+  content: {
+    paddingTop: 28,
+    paddingHorizontal: 28,
+    paddingBottom: 120,
+    gap: 25,
   },
-  selectedBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 8,
-    backgroundColor: Colors.navbarFocus,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: Colors.secondaryDarkBlue,
-  },
-  selectedText: {
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.base,
-    color: Colors.secondaryDarkBlue,
-  },
-  inviteBtn: { paddingVertical: 6, paddingHorizontal: 16 },
-  list: { paddingHorizontal: 24, paddingBottom: 20, gap: 8 },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.offWhite,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: Colors.lightGray,
-    padding: 12,
-    gap: 12,
-  },
-  contactItemSelected: {
-    borderColor: Colors.actualMainBlue,
-    backgroundColor: 'rgba(0,82,209,0.05)',
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.lightGray,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarSelected: { backgroundColor: Colors.actualMainBlue },
-  avatarInitial: {
+  sectionTitle: {
     fontFamily: Fonts.bold,
-    fontSize: FontSizes.md,
-    color: Colors.white,
-  },
-  contactName: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.base,
+    fontSize: 24,
     color: Colors.black,
+    lineHeight: 31,
+    marginBottom: -12,
+  },
+  stack: {
+    gap: 15,
   },
 });

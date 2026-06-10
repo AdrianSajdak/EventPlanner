@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '../../theme/colors';
@@ -120,6 +120,8 @@ const HistoryItem = ({
 
 export default function UserProfileScreen({ navigation }: Props) {
   const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [bio, setBio] = useState('Miłośnik architektury i kawy');
+  const [isEditingBio, setIsEditingBio] = useState(false);
   const visibleHistoryItems = historyExpanded ? HISTORY_ITEMS : HISTORY_ITEMS.slice(0, 2);
 
   const goBack = () => {
@@ -141,14 +143,35 @@ export default function UserProfileScreen({ navigation }: Props) {
             </View>
             <TouchableOpacity
               style={styles.avatarEditButton}
-              onPress={() => navigation.navigate('ChangePersonalData')}
+              onPress={() => setIsEditingBio((current) => !current)}
+              onLongPress={() =>
+                Alert.alert(
+                  'Edycja opisu',
+                  'Ten przycisk służy do zmiany krótkiego opisu pod nazwą profilu.'
+                )
+              }
               activeOpacity={0.75}
             >
               <AppIcon name="edit" size={18} color={Colors.white} />
             </TouchableOpacity>
           </View>
           <Text style={styles.userName}>Aleksander Kowalski</Text>
-          <Text style={styles.userSubtitle}>Miłośnik architektury i kawy</Text>
+          {isEditingBio ? (
+            <TextInput
+              value={bio}
+              onChangeText={setBio}
+              onBlur={() => setIsEditingBio(false)}
+              onSubmitEditing={() => setIsEditingBio(false)}
+              style={styles.bioInput}
+              autoFocus
+              maxLength={60}
+              returnKeyType="done"
+              autoCorrect={false}
+              spellCheck={false}
+            />
+          ) : (
+            <Text style={styles.userSubtitle}>{bio}</Text>
+          )}
         </View>
 
         <Text style={styles.sectionTitle}>Statystyki</Text>
@@ -276,6 +299,19 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: 14,
     color: Colors.mainGraySecondary,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  bioInput: {
+    minWidth: 230,
+    maxWidth: '90%',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.actualMainBlue,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+    color: Colors.black,
     lineHeight: 20,
     textAlign: 'center',
   },

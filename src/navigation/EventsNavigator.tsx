@@ -10,6 +10,7 @@ import EventHistoryScreen from '../screens/events/EventHistoryScreen';
 import ChatScreen from '../screens/events/ChatScreen';
 import PlanningScreen from '../screens/events/PlanningScreen';
 import CounterProposalScreen from '../screens/events/CounterProposalScreen';
+import InviteMoreScreen from '../screens/friends/InviteMoreScreen';
 
 export type EventsStackParamList = {
   Dashboard: undefined;
@@ -22,6 +23,7 @@ export type EventsStackParamList = {
   Chat: { eventId: string; isOrganizer?: boolean };
   Planning: { eventId: string; isOrganizer?: boolean };
   CounterProposal: { eventId: string };
+  InviteMore: { eventId?: string };
 };
 
 const Stack = createNativeStackNavigator<EventsStackParamList>();
@@ -39,6 +41,7 @@ export default function EventsNavigator() {
       <Stack.Screen name="Chat" component={ChatScreen} />
       <Stack.Screen name="Planning" component={PlanningScreen} />
       <Stack.Screen name="CounterProposal" component={CounterProposalScreen} />
+      <Stack.Screen name="InviteMore" component={InviteMoreScreen} />
     </Stack.Navigator>
   );
 }

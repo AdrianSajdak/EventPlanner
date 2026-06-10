@@ -193,7 +193,10 @@ export default function NewEventScreen({ navigation }: Props) {
 
           <View style={styles.inviteHeader}>
             <Text style={styles.label}>Zaproś znajomych</Text>
-            <TouchableOpacity activeOpacity={0.75}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('InviteMore', {})}
+              activeOpacity={0.75}
+            >
               <Text style={styles.seeAll}>+ ZOBACZ WSZYSTKICH</Text>
             </TouchableOpacity>
           </View>
@@ -203,7 +206,11 @@ export default function NewEventScreen({ navigation }: Props) {
                 <FriendChip key={`${name}-${index}`} name={name} />
               ))}
             </View>
-            <TouchableOpacity style={styles.inviteMore} activeOpacity={0.75}>
+            <TouchableOpacity
+              style={styles.inviteMore}
+              onPress={() => navigation.navigate('InviteMore', {})}
+              activeOpacity={0.75}
+            >
               <View style={styles.invitePlus}>
                 <AppIcon name="add" size={26} color={Colors.secondaryDarkBlue} />
               </View>
