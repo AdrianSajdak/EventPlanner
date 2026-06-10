@@ -53,6 +53,9 @@ export default function ChangePasswordScreen({ navigation }: Props) {
             placeholder="••••••••"
             isPassword
           />
+          <Text style={styles.passwordHint}>
+            Hasło musi zawierać co najmniej 1 dużą literę, cyfrę i znak specjalny.
+          </Text>
           <SettingsField
             label="Potwierdź nowe hasło"
             icon="shield"
@@ -83,5 +86,12 @@ const styles = StyleSheet.create({
     color: Colors.black,
     lineHeight: 31,
     marginBottom: 10,
+  },
+  passwordHint: {
+    marginTop: -16,
+    fontFamily: Fonts.regular,
+    fontSize: 12,
+    color: Colors.mainGraySecondary,
+    lineHeight: 17,
   },
 });
