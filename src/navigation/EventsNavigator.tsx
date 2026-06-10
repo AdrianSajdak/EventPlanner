@@ -19,8 +19,8 @@ export type EventsStackParamList = {
   EventDetails: { eventId: string; isOrganizer: boolean };
   EventHistory: { eventId: string };
   EventDetailsOrganizer: { eventId: string };
-  Chat: { eventId: string };
-  Planning: { eventId: string };
+  Chat: { eventId: string; isOrganizer?: boolean };
+  Planning: { eventId: string; isOrganizer?: boolean };
   CounterProposal: { eventId: string };
 };
 

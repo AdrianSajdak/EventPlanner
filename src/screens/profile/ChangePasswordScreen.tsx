@@ -1,24 +1,27 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, SafeAreaView,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors } from '../../theme/colors';
-import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
-import { Input } from '../../components/common/Input';
-import { Button } from '../../components/common/Button';
+import { SettingsField, SettingsSubmitButton } from '../../components/profile/SettingsFormControls';
 import { ProfileStackParamList } from '../../navigation/ProfileNavigator';
+import { Colors } from '../../theme/colors';
+import { Fonts } from '../../theme/typography';
 
 type Props = {
   navigation: NativeStackNavigationProp<ProfileStackParamList, 'ChangePassword'>;
 };
 
 export default function ChangePasswordScreen({ navigation }: Props) {
-  const [current, setCurrent] = useState('');
-  const [newPass, setNewPass] = useState('');
-  const [confirm, setConfirm] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   return (
     <KeyboardAvoidingView
@@ -26,44 +29,39 @@ export default function ChangePasswordScreen({ navigation }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <SafeAreaView style={styles.safe}>
-        <Navbar title="Zmień hasło" showBack onBack={() => navigation.goBack()} />
+        <Navbar
+          title="Zmień hasło"
+          showBack
+          showMenu={false}
+          onBack={() => navigation.goBack()}
+        />
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.card}>
-            <Text style={styles.hint}>
-              Hasło musi mieć co najmniej 8 znaków, zawierać wielką literę i cyfrę.
-            </Text>
-            <Input
-              label="Aktualne hasło"
-              value={current}
-              onChangeText={setCurrent}
-              placeholder="••••••••"
-              isPassword
-            />
-            <Input
-              label="Nowe hasło"
-              value={newPass}
-              onChangeText={setNewPass}
-              placeholder="••••••••"
-              isPassword
-            />
-            <Input
-              label="Potwierdź nowe hasło"
-              value={confirm}
-              onChangeText={setConfirm}
-              placeholder="••••••••"
-              isPassword
-            />
-          </View>
-          <View style={styles.actions}>
-            <Button label="Anuluj" variant="secondary" onPress={() => navigation.goBack()} style={styles.btn} />
-            <Button
-              label="Zmień hasło"
-              variant="primary"
-              onPress={() => navigation.goBack()}
-              disabled={!current || !newPass || !confirm}
-              style={styles.btn}
-            />
-          </View>
+          <Text style={styles.title}>Zmień hasło</Text>
+          <SettingsField
+            label="Obecne hasło"
+            icon="password"
+            value={currentPassword}
+            onChangeText={setCurrentPassword}
+            placeholder="••••••••"
+            isPassword
+          />
+          <SettingsField
+            label="Nowe hasło"
+            icon="lock"
+            value={newPassword}
+            onChangeText={setNewPassword}
+            placeholder="••••••••"
+            isPassword
+          />
+          <SettingsField
+            label="Potwierdź nowe hasło"
+            icon="shield"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            placeholder="••••••••"
+            isPassword
+          />
+          <SettingsSubmitButton label="Zmień hasło" onPress={() => navigation.goBack()} />
         </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>
@@ -73,21 +71,17 @@ export default function ChangePasswordScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   safe: { flex: 1, backgroundColor: Colors.lightModeMainTheme },
-  content: { padding: 24, gap: 20, paddingBottom: 40 },
-  card: {
-    backgroundColor: Colors.offWhite,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: Colors.secondaryDarkBlue,
-    padding: 20,
-    gap: 16,
+  content: {
+    paddingTop: 36,
+    paddingHorizontal: 28,
+    paddingBottom: 120,
+    gap: 26,
   },
-  hint: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.base,
-    color: Colors.mainGraySecondary,
-    lineHeight: 20,
+  title: {
+    fontFamily: Fonts.bold,
+    fontSize: 24,
+    color: Colors.black,
+    lineHeight: 31,
+    marginBottom: 10,
   },
-  actions: { flexDirection: 'row', gap: 12 },
-  btn: { flex: 1, paddingVertical: 12 },
 });

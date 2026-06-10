@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigatorScreenParams } from '@react-navigation/native';
-import EventsNavigator from './EventsNavigator';
+import EventsNavigator, { EventsStackParamList } from './EventsNavigator';
 import FriendsNavigator from './FriendsNavigator';
 import NotificationsScreen from '../screens/notifications/NotificationsScreen';
 import ProfileNavigator, { ProfileStackParamList } from './ProfileNavigator';
@@ -9,7 +9,7 @@ import { BottomNavBar } from '../components/common/BottomNavBar';
 
 // typy dla zakładek 
 export type MainTabParamList = {
-  events: undefined;
+  events: NavigatorScreenParams<EventsStackParamList> | undefined;
   friends: undefined;
   notifications: undefined;
   profile: NavigatorScreenParams<ProfileStackParamList> | undefined;
@@ -24,6 +24,10 @@ export default function MainNavigator() {
         <BottomNavBar 
           activeTab={props.state.routeNames[props.state.index] as any}
           onTabPress={(tab) => {
+            if (tab === 'events') {
+              props.navigation.navigate('events', { screen: 'Dashboard' });
+              return;
+            }
             if (tab === 'profile') {
               props.navigation.navigate('profile', { screen: 'UserProfile' });
               return;

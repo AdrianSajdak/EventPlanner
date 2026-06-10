@@ -69,8 +69,8 @@ export default function EventDetailsOrganizerScreen({ navigation, route }: Props
             style={[styles.tabItem, activeTab === tab && styles.activeTabItem]}
             onPress={() => {
               setActiveTab(tab);
-              if (tab === 'chat') navigation.navigate('Chat', { eventId });
-              if (tab === 'planning') navigation.navigate('Planning', { eventId });
+              if (tab === 'chat') navigation.navigate('Chat', { eventId, isOrganizer: true });
+              if (tab === 'planning') navigation.navigate('Planning', { eventId, isOrganizer: true });
             }}
             activeOpacity={0.7}
           >

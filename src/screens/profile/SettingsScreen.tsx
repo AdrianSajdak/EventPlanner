@@ -74,7 +74,7 @@ export default function SettingsScreen({ navigation }: Props) {
       // intentionally silent
     }
 
-    const rootNav = navigation.getParent<any>()?.getParent<any>();
+    const rootNav = navigation.getParent()?.getParent();
     rootNav?.dispatch(
       CommonActions.reset({
         index: 0,
