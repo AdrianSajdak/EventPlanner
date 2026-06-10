@@ -1,76 +1,168 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity,
-  SafeAreaView, KeyboardAvoidingView, Platform, TextInput,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { Colors } from '../../theme/colors';
-import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
 import { AppIcon } from '../../components/common/AppIcon';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
+import { Colors } from '../../theme/colors';
+import { Fonts } from '../../theme/typography';
+
+const boardGamesImage = require('../../../assets/images/chat-board-games.png');
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'Chat'>;
   route: RouteProp<EventsStackParamList, 'Chat'>;
 };
 
-interface Message {
+type SentMessage = {
   id: string;
   text: string;
-  sender: string;
-  isMine: boolean;
   time: string;
-}
+};
 
-const MOCK_MESSAGES: Message[] = [
-  { id: '1', text: 'Hej wszystkim! Gotowi na dzisiejszy wieczór? 🎲', sender: 'Marek', isMine: false, time: '18:00' },
-  { id: '2', text: 'Tak! Biorę ze sobą Catana i Carcassonne', sender: 'Anna', isMine: false, time: '18:05' },
-  { id: '3', text: 'Super! Ja przyjdę może 10 minut po 18:30', sender: 'Ty', isMine: true, time: '18:10' },
-  { id: '4', text: 'Spoko, drzwi będą otwarte. Na dole możecie zadzwonić na domofon nr 12', sender: 'Marek', isMine: false, time: '18:12' },
-  { id: '5', text: 'Okej, do zobaczenia! 👋', sender: 'Ty', isMine: true, time: '18:15' },
-];
+const TabBar = ({
+  navigation,
+  eventId,
+  isOrganizer,
+}: {
+  navigation: NativeStackNavigationProp<EventsStackParamList, 'Chat'>;
+  eventId: string;
+  isOrganizer?: boolean;
+}) => (
+  <View style={styles.tabBar}>
+    <TouchableOpacity
+      style={styles.tabItem}
+      onPress={() => {
+        if (isOrganizer) {
+          navigation.navigate('EventDetailsOrganizer', { eventId });
+          return;
+        }
+        navigation.navigate('EventDetails', { eventId, isOrganizer: false });
+      }}
+      activeOpacity={0.7}
+    >
+      <Text style={styles.tabLabel}>Info</Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      style={styles.tabItem}
+      onPress={() => navigation.navigate('Planning', { eventId, isOrganizer })}
+      activeOpacity={0.7}
+    >
+      <Text style={styles.tabLabel}>Planowanie</Text>
+    </TouchableOpacity>
+    <View style={[styles.tabItem, styles.activeTabItem]}>
+      <Text style={[styles.tabLabel, styles.activeTabLabel]}>Czat</Text>
+    </View>
+  </View>
+);
 
-export default function ChatScreen({ navigation, route }: Props) {
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
+const IncomingMessage = ({
+  sender,
+  time,
+  text,
+}: {
+  sender: string;
+  time: string;
+  text: string;
+}) => (
+  <View style={styles.incomingBlock}>
+    <View style={styles.messageMetaRow}>
+      <Text style={styles.senderName}>{sender}</Text>
+      <Text style={styles.messageTime}>{time}</Text>
+    </View>
+    <View style={styles.incomingBubble}>
+      <Text style={styles.incomingText}>{text}</Text>
+    </View>
+  </View>
+);
 
-  const sendMessage = () => {
-    if (!message.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        text: message,
-        sender: 'Ty',
-        isMine: true,
-        time: new Date().toLocaleTimeString('pl', { hour: '2-digit', minute: '2-digit' }),
-      },
-    ]);
-    setMessage('');
-  };
+const OutgoingMessage = ({
+  time,
+  text,
+}: {
+  time: string;
+  text: string;
+}) => (
+  <View style={styles.outgoingBlock}>
+    <Text style={styles.outgoingTime}>{time} ⌁</Text>
+    <View style={styles.outgoingBubble}>
+      <Text style={styles.outgoingText}>{text}</Text>
+    </View>
+  </View>
+);
 
-  const renderItem = ({ item }: { item: Message }) => (
-    <View style={[styles.messageRow, item.isMine && styles.messageRowMine]}>
-      {!item.isMine && (
-        <View style={styles.avatarSmall}>
-          <Text style={styles.avatarInitial}>{item.sender[0]}</Text>
-        </View>
-      )}
-      <View style={[styles.bubble, item.isMine && styles.bubbleMine]}>
-        {!item.isMine && <Text style={styles.senderName}>{item.sender}</Text>}
-        <Text style={[styles.messageText, item.isMine && styles.messageTextMine]}>{item.text}</Text>
-        <Text style={[styles.messageTime, item.isMine && styles.messageTimeMine]}>{item.time}</Text>
+const PollCard = () => (
+  <View style={styles.pollCard}>
+    <View style={styles.pollHeader}>
+      <Text style={styles.pollTitle}>Głosowanie: Godzina startu</Text>
+      <View style={styles.pollBadge}>
+        <Text style={styles.pollBadgeText}>AKTYWNE</Text>
       </View>
     </View>
-  );
+    <View style={styles.pollOption}>
+      <Text style={styles.pollOptionText}>18:00</Text>
+      <View style={styles.pollVotes}>
+        <Text style={styles.pollVoteText}>4 głosy</Text>
+      </View>
+    </View>
+    <View style={styles.pollOption}>
+      <View style={styles.pollFillSmall} />
+      <Text style={styles.pollOptionText}>19:00</Text>
+      <View style={styles.pollVotes}>
+        <Text style={styles.pollVoteText}>1 głos</Text>
+      </View>
+    </View>
+  </View>
+);
+
+const PhotoMessage = () => (
+  <View style={styles.photoBlock}>
+    <View style={styles.messageMetaRow}>
+      <Text style={styles.senderName}>Anna W.</Text>
+      <Text style={styles.messageTime}>19:12</Text>
+    </View>
+    <View style={styles.photoCard}>
+      <Image source={boardGamesImage} style={styles.photo} />
+      <Text style={styles.photoText}>Spakowana i gotowa! Do{'\n'}zobaczenia.</Text>
+    </View>
+  </View>
+);
+
+export default function ChatScreen({ navigation, route }: Props) {
+  const [draft, setDraft] = useState('');
+  const [sentMessages, setSentMessages] = useState<SentMessage[]>([
+    { id: 'mock-new', text: 'Nowa wiadomość!', time: '19:50' },
+  ]);
+
+  const sendMessage = () => {
+    if (!draft.trim()) return;
+    setSentMessages((current) => [
+      ...current,
+      {
+        id: Date.now().toString(),
+        text: draft.trim(),
+        time: new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }),
+      },
+    ]);
+    setDraft('');
+  };
 
   return (
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={0}
     >
       <SafeAreaView style={styles.safe}>
         <Navbar
@@ -78,38 +170,55 @@ export default function ChatScreen({ navigation, route }: Props) {
           showBack
           onBack={() => navigation.goBack()}
         />
-
-        <View style={styles.tabBar}>
-          <TouchableOpacity style={styles.tabItem} onPress={() => navigation.goBack()}>
-            <Text style={styles.tabLabel}>Info</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Planning', { eventId: route.params.eventId })}>
-            <Text style={styles.tabLabel}>Planowanie</Text>
-          </TouchableOpacity>
-          <View style={[styles.tabItem, styles.activeTabItem]}>
-            <Text style={[styles.tabLabel, styles.activeTabLabel]}>Czat</Text>
-          </View>
-        </View>
-
-        <FlatList
-          data={messages}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
+        <TabBar
+          navigation={navigation}
+          eventId={route.params.eventId}
+          isOrganizer={route.params.isOrganizer}
         />
 
-        <View style={styles.inputBar}>
-          <TextInput
-            style={styles.input}
-            value={message}
-            onChangeText={setMessage}
-            placeholder="Napisz wiadomość..."
-            placeholderTextColor={Colors.mainGraySecondary}
-            multiline
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <Text style={styles.systemText}>Anna zagłosowała</Text>
+          <IncomingMessage
+            sender="Marek K."
+            time="18:42"
+            text={'Hej! Przyniosę "Terraformację\nMarsa”. Ktoś jeszcze ma jakieś\npropozycje na wieczór?'}
           />
-          <TouchableOpacity style={styles.sendBtn} onPress={sendMessage} activeOpacity={0.8}>
-            <AppIcon name="send" size={20} color={Colors.white} />
+          <IncomingMessage
+            sender="Karolina S."
+            time="18:45"
+            text={'Ja mogę wziąć “Everdell”, ale\nMarek musi pomóc z tłumaczeniem\nzasad, bo dawno nie grałam :)'}
+          />
+          <View style={styles.statusPill}>
+            <AppIcon name="accepted" size={14} color={Colors.secondaryDarkBlue} />
+            <Text style={styles.statusText}>Lokalizacja została potwierdzona</Text>
+          </View>
+          <OutgoingMessage
+            time="18:50"
+            text={'Super! Ja ogarnę jakieś przekąski i\nnapoje. Marek, weź też ten\ndodatek do Marsa, jeśli masz.'}
+          />
+          <PollCard />
+          <PhotoMessage />
+          {sentMessages.map((item) => (
+            <OutgoingMessage key={item.id} time={item.time} text={item.text} />
+          ))}
+        </ScrollView>
+
+        <View style={styles.inputBar}>
+          <TouchableOpacity style={styles.plusButton} activeOpacity={0.75}>
+            <AppIcon name="add" size={24} color={Colors.secondaryDarkBlue} />
+          </TouchableOpacity>
+          <View style={styles.inputBox}>
+            <TextInput
+              style={styles.input}
+              value={draft}
+              onChangeText={setDraft}
+              placeholder="Napisz wiadomość..."
+              placeholderTextColor="#9AA7BD"
+            />
+            <AppIcon name="smile" size={21} color="#8EA0BA" />
+          </View>
+          <TouchableOpacity style={styles.sendButton} onPress={sendMessage} activeOpacity={0.8}>
+            <AppIcon name="sendMessage" size={24} color={Colors.white} />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -121,112 +230,273 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   safe: { flex: 1, backgroundColor: Colors.lightModeMainTheme },
   tabBar: {
-    flexDirection: 'row',
+    marginHorizontal: 28,
+    marginTop: 24,
+    marginBottom: 20,
     borderTopWidth: 2,
     borderBottomWidth: 2,
     borderColor: Colors.secondaryDarkBlue,
-    paddingHorizontal: 4,
-    paddingVertical: 8,
-    gap: 4,
+    flexDirection: 'row',
+    paddingVertical: 6,
   },
   tabItem: {
     flex: 1,
+    minHeight: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
     borderRadius: 4,
   },
-  activeTabItem: { backgroundColor: Colors.navbarFocus },
+  activeTabItem: {
+    backgroundColor: '#DCE4EF',
+  },
   tabLabel: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.base,
-    color: Colors.secondaryDarkBlue,
-    textAlign: 'center',
-  },
-  activeTabLabel: { fontFamily: Fonts.bold },
-  list: { padding: 16, gap: 12 },
-  messageRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-    marginBottom: 8,
-  },
-  messageRowMine: { justifyContent: 'flex-end' },
-  avatarSmall: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.actualMainBlue,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarInitial: {
-    color: Colors.white,
     fontFamily: Fonts.bold,
     fontSize: 14,
+    color: Colors.secondaryDarkBlue,
+    lineHeight: 19,
   },
-  bubble: {
-    maxWidth: '75%',
-    backgroundColor: Colors.offWhite,
-    borderRadius: 12,
-    borderTopLeftRadius: 2,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: Colors.divider,
-    gap: 4,
+  activeTabLabel: {
+    fontFamily: Fonts.bold,
   },
-  bubbleMine: {
-    backgroundColor: Colors.secondaryDarkBlue,
-    borderTopRightRadius: 2,
-    borderTopLeftRadius: 12,
-    borderColor: Colors.secondaryDarkBlue,
+  content: {
+    paddingHorizontal: 28,
+    paddingBottom: 28,
+    gap: 26,
+  },
+  systemText: {
+    alignSelf: 'center',
+    fontFamily: Fonts.regular,
+    fontSize: 12,
+    color: Colors.graySecondary,
+    lineHeight: 17,
+  },
+  incomingBlock: {
+    gap: 10,
+  },
+  messageMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
   },
   senderName: {
     fontFamily: Fonts.bold,
     fontSize: 12,
     color: Colors.actualMainBlue,
+    lineHeight: 17,
   },
-  messageText: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.base,
-    color: Colors.black,
-    lineHeight: 20,
-  },
-  messageTextMine: { color: Colors.white },
   messageTime: {
     fontFamily: Fonts.regular,
-    fontSize: 11,
-    color: Colors.mainGraySecondary,
-    alignSelf: 'flex-end',
+    fontSize: 10,
+    color: Colors.graySecondary,
+    lineHeight: 14,
   },
-  messageTimeMine: { color: 'rgba(255,255,255,0.6)' },
-  inputBar: {
+  incomingBubble: {
+    borderWidth: 2,
+    borderColor: Colors.secondaryDarkBlue,
+    borderRadius: 6,
+    backgroundColor: Colors.offWhite,
+    paddingHorizontal: 15,
+    paddingVertical: 14,
+    shadowColor: Colors.graySecondary,
+    shadowOffset: { width: 3, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  incomingText: {
+    fontFamily: Fonts.regular,
+    fontSize: 17,
+    color: Colors.black,
+    lineHeight: 27,
+  },
+  statusPill: {
+    alignSelf: 'center',
+    minHeight: 28,
+    borderWidth: 2,
+    borderColor: Colors.secondaryDarkBlue,
+    borderRadius: 4,
+    backgroundColor: '#C9DDF6',
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    gap: 7,
+    paddingHorizontal: 14,
+  },
+  statusText: {
+    fontFamily: Fonts.bold,
+    fontSize: 12,
+    color: Colors.secondaryDarkBlue,
+  },
+  outgoingBlock: {
+    alignItems: 'flex-end',
+    paddingLeft: 36,
+    gap: 9,
+  },
+  outgoingTime: {
+    alignSelf: 'flex-start',
+    marginLeft: 5,
+    fontFamily: Fonts.regular,
+    fontSize: 10,
+    color: Colors.graySecondary,
+  },
+  outgoingBubble: {
+    alignSelf: 'stretch',
+    borderWidth: 2,
+    borderColor: Colors.secondaryDarkBlue,
+    borderRadius: 6,
+    backgroundColor: Colors.purpleAccent,
+    paddingHorizontal: 15,
+    paddingVertical: 16,
+    shadowColor: Colors.graySecondary,
+    shadowOffset: { width: 3, height: 4 },
+    shadowOpacity: 0.55,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  outgoingText: {
+    fontFamily: Fonts.regular,
+    fontSize: 17,
+    color: Colors.white,
+    lineHeight: 27,
+  },
+  pollCard: {
+    borderWidth: 2,
+    borderColor: Colors.actualMainBlue,
+    borderRadius: 4,
+    backgroundColor: '#BFD9F5',
+    padding: 14,
+    gap: 10,
+    shadowColor: Colors.graySecondary,
+    shadowOffset: { width: 3, height: 4 },
+    shadowOpacity: 0.55,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  pollHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  pollTitle: {
+    fontFamily: Fonts.bold,
+    fontSize: 13,
+    color: Colors.black,
+  },
+  pollBadge: {
+    borderRadius: 4,
+    backgroundColor: '#A5CBF8',
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+  },
+  pollBadgeText: {
+    fontFamily: Fonts.bold,
+    fontSize: 11,
+    color: Colors.actualMainBlue,
+  },
+  pollOption: {
+    minHeight: 32,
+    borderRadius: 7,
     backgroundColor: Colors.offWhite,
-    borderTopWidth: 1,
-    borderTopColor: Colors.divider,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  pollFillSmall: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: '30%',
+    backgroundColor: '#DCE5F2',
+  },
+  pollOptionText: {
+    flex: 1,
+    paddingLeft: 12,
+    fontFamily: Fonts.regular,
+    fontSize: 13,
+    color: Colors.black,
+    zIndex: 1,
+  },
+  pollVotes: {
+    width: 88,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  pollVoteText: {
+    fontFamily: Fonts.bold,
+    fontSize: 13,
+    color: Colors.black,
+  },
+  photoBlock: {
+    gap: 10,
+  },
+  photoCard: {
+    borderWidth: 2,
+    borderColor: Colors.secondaryDarkBlue,
+    borderRadius: 6,
+    backgroundColor: Colors.offWhite,
+    padding: 14,
+    shadowColor: Colors.graySecondary,
+    shadowOffset: { width: 3, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  photo: {
+    width: '100%',
+    height: 288,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  photoText: {
+    paddingHorizontal: 16,
+    fontFamily: Fonts.regular,
+    fontSize: 17,
+    color: Colors.black,
+    lineHeight: 27,
+  },
+  inputBar: {
+    minHeight: 58,
+    backgroundColor: Colors.secondaryDarkBlue,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  plusButton: {
+    width: 31,
+    height: 31,
+    borderRadius: 16,
+    backgroundColor: Colors.lightModeMainTheme,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inputBox: {
+    flex: 1,
+    minHeight: 31,
+    borderRadius: 16,
+    backgroundColor: Colors.offWhite,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
     gap: 8,
   },
   input: {
     flex: 1,
-    backgroundColor: Colors.lightModeMainTheme,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 5,
     fontFamily: Fonts.regular,
-    fontSize: FontSizes.base,
+    fontSize: 14,
     color: Colors.black,
-    maxHeight: 100,
-    borderWidth: 1,
-    borderColor: Colors.divider,
   },
-  sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.actualMainBlue,
+  sendButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.purpleAccent,
     alignItems: 'center',
     justifyContent: 'center',
   },

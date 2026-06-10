@@ -99,6 +99,9 @@ export default function RegisterScreen({ navigation }: Props) {
                     placeholder="••••••••"
                     isPassword
                   />
+                  <Text style={styles.passwordHint}>
+                    Hasło musi zawierać co najmniej 1 dużą literę, cyfrę i znak specjalny.
+                  </Text>
                   <Input
                     label="Potwierdź hasło"
                     value={confirmPassword}
@@ -224,6 +227,13 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   form: { gap: 24 },
+  passwordHint: {
+    marginTop: -14,
+    fontFamily: Fonts.regular,
+    fontSize: 12,
+    color: Colors.mainGraySecondary,
+    lineHeight: 17,
+  },
   actionButton: {
     backgroundColor: Colors.purpleAccent,
     borderRadius: 6,

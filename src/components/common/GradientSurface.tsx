@@ -25,7 +25,7 @@ const webFullScreenStyle =
     ? ({
         minHeight: '100vh',
         width: '100vw',
-      } as ViewStyle)
+      } as unknown as ViewStyle)
     : null;
 
 export const GradientSurface = ({

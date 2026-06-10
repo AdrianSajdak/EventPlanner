@@ -1,30 +1,38 @@
 # EventPlanner
 
-Aplikacja mobilna do organizowania wspólnych spotkań ze znajomymi.  
-Projekt został wykonany w React Native z wykorzystaniem Firebase Authentication oraz Firebase Analytics.
+Aplikacja do planowania wspólnych wyjść ze znajomymi. Pozwala tworzyć wydarzenia, zapraszać uczestników, ustalać szczegóły spotkania przez ankiety oraz prowadzić rozmowę w czacie wydarzenia.
+
+Projekt został wykonany w React Native i Expo z wykorzystaniem React Navigation, Firebase Authentication oraz Firebase Analytics.
 
 ---
 
 # Funkcjonalności
 
-- tworzenie wydarzeń,
-- zarządzanie wydarzeniami,
-- system zaproszeń,
-- głosowania dotyczące miejsca i terminu,
-- obsługa uczestników wydarzenia,
-- powiadomienia w aplikacji,
-- historia wydarzeń,
-- logowanie użytkownika.
+- logowanie i rejestracja użytkownika,
+- dashboard z wydarzeniami do akceptacji, zaakceptowanymi i organizowanymi przez użytkownika,
+- tworzenie i edycja wydarzeń,
+- odwoływanie wydarzenia lub rezygnacja z udziału,
+- zapraszanie znajomych i list znajomych,
+- szczegóły wydarzenia z datą, rolą, lokalizacją, mapą, ankietą i uczestnikami,
+- planowanie wydarzenia przez głosowania i kontrpropozycje,
+- czat wydarzenia z wiadomościami, ankietą i zdjęciami,
+- ekran znajomych, list znajomych i sugerowanych kontaktów,
+- powiadomienia o zaproszeniach, zmianach planu, wynikach głosowań i odwołanych wydarzeniach,
+- profil użytkownika z informacjami, statystykami i historią,
+- ustawienia konta, powiadomień push, danych osobowych, e-maila i hasła.
 
 ---
 
 # Technologie
 
-- React Native
+- Expo
 - TypeScript
+- React Native
+- React Native Web
 - React Navigation
 - Firebase Authentication
 - Firebase Analytics
+- Expo Google Fonts
 - Context API
 - StyleSheet
 
@@ -33,38 +41,70 @@ Projekt został wykonany w React Native z wykorzystaniem Firebase Authentication
 # Struktura projektu
 
 ```bash
-src/
-├── components/
-│   └── common/
-│       ├── BottomNavBar.tsx
-│       ├── Button.tsx
-│       ├── EventCard.tsx
-│       ├── Input.tsx
-│       └── Navbar.tsx
+EventPlanner/
+├── App.tsx
+├── app.json
+├── index.ts
+├── package.json
+├── tsconfig.json
+├── google-services.json
 │
-├── context/
-│   ├── EventsContext.tsx
-│   └── FriendsContext.tsx
+├── assets/
+│   ├── icons/
+│   ├── images/
+│   └── screens/
 │
-├── data/
-│   ├── mockEvents.ts
-│   └── mockFriends.ts
+├── scripts/
 │
-├── navigation/
-│   ├── AuthNavigator.tsx
-│   ├── EventsNavigator.tsx
-│   ├── FriendsNavigator.tsx
-│   ├── MainNavigator.tsx
-│   ├── ProfileNavigator.tsx
-│   └── index.tsx
-│
-├── screens/
-│   ├── auth/
-│   ├── dashboard/
-│   ├── events/
-│   ├── friends/
-│   ├── notifications/
-│   └── profile/
+└── src/
+    ├── firebaseConfig.ts
+    │
+    ├── components/
+    │   ├── common/
+    │   │   ├── AppIcon.tsx
+    │   │   ├── BottomNavBar.tsx
+    │   │   ├── Button.tsx
+    │   │   ├── EventCard.tsx
+    │   │   ├── GradientSurface.tsx
+    │   │   ├── Input.tsx
+    │   │   └── Navbar.tsx
+    │   ├── friends/
+    │   │   └── FriendsUi.tsx
+    │   └── profile/
+    │       └── SettingsFormControls.tsx
+    │
+    ├── context/
+    │   ├── EventsContext.tsx
+    │   └── FriendsContext.tsx
+    │
+    ├── data/
+    │   ├── mockEvents.ts
+    │   └── mockFriends.ts
+    │
+    ├── navigation/
+    │   ├── AuthNavigator.tsx
+    │   ├── EventsNavigator.tsx
+    │   ├── FriendsNavigator.tsx
+    │   ├── MainNavigator.tsx
+    │   ├── ProfileNavigator.tsx
+    │   └── index.tsx
+    │
+    ├── screens/
+    │   ├── auth/
+    │   ├── dashboard/
+    │   ├── events/
+    │   ├── friends/
+    │   ├── notifications/
+    │   └── profile/
+    │
+    ├── services/
+    │   ├── analytics.ts
+    │   ├── analytics.web.ts
+    │   └── auth.ts
+    │
+    └── theme/
+        ├── colors.ts
+        └── typography.ts
 ```
 
 ---
@@ -75,24 +115,22 @@ Projekt został podzielony na moduły zgodnie z dobrymi praktykami React Native.
 
 ## Components
 
-Folder `components/common` zawiera reużywalne komponenty UI wykorzystywane w wielu ekranach aplikacji:
+Folder `components` zawiera reużywalne elementy interfejsu:
 
-- `Button`,
-- `Input`,
-- `Navbar`,
-- `BottomNavBar`,
-- `EventCard`.
+- `components/common` - wspólne komponenty UI: `AppIcon`, `BottomNavBar`, `Button`, `EventCard`, `GradientSurface`, `Input`, `Navbar`,
+- `components/friends` - elementy list znajomych i zapraszania,
+- `components/profile` - kontrolki formularzy w ustawieniach profilu.
 
 ## Screens
 
-Folder `screens` zawiera główne widoki aplikacji:
+Folder `screens` zawiera widoki aplikacji pogrupowane według głównych sekcji:
 
-- autoryzacja,
-- dashboard,
-- wydarzenia,
-- znajomi,
-- powiadomienia,
-- profil.
+- `auth` - logowanie i rejestracja,
+- `dashboard` - lista wydarzeń użytkownika,
+- `events` - tworzenie, edycja, szczegóły, planowanie, czat i historia wydarzeń,
+- `friends` - znajomi, listy znajomych i zapraszanie,
+- `notifications` - powiadomienia,
+- `profile` - profil, ustawienia i formularze zmiany danych.
 
 ## Navigation
 
@@ -105,6 +143,8 @@ W projekcie zastosowano osobne navigatory dla głównych sekcji:
 - `EventsNavigator`,
 - `FriendsNavigator`,
 - `ProfileNavigator`.
+
+Dolny pasek nawigacji prowadzi do dashboardu wydarzeń, znajomych, powiadomień oraz profilu użytkownika. Menu z trzema kropkami prowadzi do ustawień.
 
 ## Context API
 
@@ -120,6 +160,18 @@ Folder `data` zawiera dane testowe wykorzystywane podczas developmentu aplikacji
 - `mockEvents`,
 - `mockFriends`.
 
+## Services
+
+Folder `services` zawiera warstwę integracji z usługami zewnętrznymi:
+
+- `auth` - obsługa logowania, rejestracji i wylogowania,
+- `analytics` - zdarzenia Firebase Analytics dla aplikacji mobilnej,
+- `analytics.web` - bezpieczne pomijanie natywnego Analytics podczas uruchamiania wersji webowej.
+
+## Theme i assets
+
+Folder `theme` zawiera współdzielone kolory i typografię. Folder `assets` przechowuje ikony SVG/PNG z projektu, obrazy używane w ekranach oraz screeny aplikacji wykorzystywane w README.
+
 ---
 
 # Nawigacja aplikacji
@@ -131,10 +183,10 @@ Widoki zostały podzielone na osobne sekcje nawigacyjne.
 |---|---|
 | Auth | logowanie i rejestracja użytkownika |
 | Dashboard | ekran główny z listą wydarzeń |
-| Events | szczegóły wydarzeń i zarządzanie wydarzeniami |
-| Friends | lista znajomych i grupy znajomych |
+| Events | tworzenie, edycja, szczegóły, planowanie i czat wydarzenia |
+| Friends | lista znajomych, listy znajomych i zapraszanie uczestników |
 | Notifications | powiadomienia użytkownika |
-| Profile | profil użytkownika i ustawienia |
+| Profile | profil użytkownika, historia i ustawienia konta |
 
 ---
 
@@ -145,6 +197,7 @@ Aplikacja wykorzystuje Firebase Authentication.
 W projekcie zaimplementowano:
 
 - logowanie użytkownika,
+- rejestrację konta,
 - obsługę konta przez Email/Password,
 - wylogowanie użytkownika,
 - przechowywanie stanu zalogowania,
@@ -165,6 +218,8 @@ W projekcie zaimplementowano:
 # Firebase Analytics
 
 Projekt zawiera integrację Firebase Analytics umożliwiającą monitorowanie aktywności użytkownika w aplikacji mobilnej.
+
+W wersji webowej używany jest osobny plik `analytics.web.ts`, dzięki któremu aplikacja może uruchamiać się w przeglądarce bez natywnego modułu Firebase Analytics.
 
 Rejestrowane zdarzenia:
 
@@ -192,17 +247,49 @@ Rejestrowane zdarzenia:
 
 ![Login](./assets/screens/login.png)
 
+## Rejestracja
+
+![Sign up](<./assets/screens/sign up.png>)
+
 ## Dashboard
 
 ![Dashboard](./assets/screens/dashboard.png)
+
+## Nowe wydarzenie
+
+![New event](<./assets/screens/new event.png>)
 
 ## Widok wydarzenia
 
 ![Event](./assets/screens/event.png)
 
+## Szczegóły wydarzenia
+
+![Event details](./assets/screens/details_of_event.png)
+
+## Planowanie wydarzenia
+
+![Event planning](./assets/screens/event_planning.png)
+
+## Czat wydarzenia
+
+![Event chat](./assets/screens/event_chat.png)
+
+## Znajomi
+
+![Friends](./assets/screens/friends.png)
+
+## Powiadomienia
+
+![Notifications](./assets/screens/notifications.png)
+
 ## Profil
 
 ![Profile](./assets/screens/profile.png)
+
+## Ustawienia
+
+![Settings](./assets/screens/settings.png)
 
 ---
 
@@ -225,6 +312,8 @@ npm start
 ```bash
 npm run web
 ```
+
+Projekt nie zawiera skryptu `npm run dev`; do pracy w przeglądarce należy używać `npm run web`.
 
 ---
 

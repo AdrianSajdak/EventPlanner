@@ -1,25 +1,140 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { Colors } from '../../theme/colors';
-import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
+import { AppIcon } from '../../components/common/AppIcon';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
-import { useEvents } from '../../context/EventsContext';
-import { logPollVoted } from '../../services/analytics';
+import { Colors } from '../../theme/colors';
+import { Fonts } from '../../theme/typography';
+
+const planningHero = require('../../../assets/images/planning-hero.png');
+const catanImage = require('../../../assets/images/game-catan.png');
+const dixitImage = require('../../../assets/images/game-dixit.png');
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'Planning'>;
   route: RouteProp<EventsStackParamList, 'Planning'>;
 };
 
+type PollOption = {
+  label: string;
+  percent: number;
+};
+
+type PollCardProps = {
+  id: string;
+  title: string;
+  icon: 'clock' | 'food';
+  options: PollOption[];
+  selectedOption?: string;
+  onSelect: (pollId: string, optionLabel: string) => void;
+};
+
+type GameSuggestionProps = {
+  image: number;
+  category: string;
+  title: string;
+};
+
+const TabBar = ({
+  navigation,
+  eventId,
+  isOrganizer,
+}: {
+  navigation: NativeStackNavigationProp<EventsStackParamList, 'Planning'>;
+  eventId: string;
+  isOrganizer?: boolean;
+}) => (
+  <View style={styles.tabBar}>
+    <TouchableOpacity
+      style={styles.tabItem}
+      onPress={() => {
+        if (isOrganizer) {
+          navigation.navigate('EventDetailsOrganizer', { eventId });
+          return;
+        }
+        navigation.navigate('EventDetails', { eventId, isOrganizer: false });
+      }}
+      activeOpacity={0.7}
+    >
+      <Text style={styles.tabLabel}>Info</Text>
+    </TouchableOpacity>
+    <View style={[styles.tabItem, styles.activeTabItem]}>
+      <Text style={[styles.tabLabel, styles.activeTabLabel]}>Planowanie</Text>
+    </View>
+    <TouchableOpacity
+      style={styles.tabItem}
+      onPress={() => navigation.navigate('Chat', { eventId, isOrganizer })}
+      activeOpacity={0.7}
+    >
+      <Text style={styles.tabLabel}>Czat</Text>
+    </TouchableOpacity>
+  </View>
+);
+
+const PollCard = ({ id, title, icon, options, selectedOption, onSelect }: PollCardProps) => (
+  <View style={styles.pollCard}>
+    <View style={styles.pollHeader}>
+      <View style={styles.pollIconBox}>
+        <AppIcon name={icon} size={25} color={Colors.actualMainBlue} />
+      </View>
+      <View style={styles.pollTitleBox}>
+        <Text style={styles.pollTitle}>{title}</Text>
+        <Text style={styles.pollSubtitle}>Zamyka się za 3 godziny</Text>
+      </View>
+    </View>
+    <View style={styles.pollOptions}>
+      {options.map((option) => {
+        const selected = selectedOption === option.label;
+        return (
+          <TouchableOpacity
+            key={option.label}
+            style={styles.pollOption}
+            onPress={() => onSelect(id, option.label)}
+            activeOpacity={0.8}
+          >
+            <View
+              style={[
+                styles.pollFill,
+                selected && styles.pollFillSelected,
+                { width: `${option.percent}%` as any },
+              ]}
+            />
+            <Text style={[styles.pollOptionLabel, selected && styles.pollOptionLabelSelected]}>
+              {option.label}
+            </Text>
+            <Text style={styles.pollPercent}>{option.percent}%</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  </View>
+);
+
+const GameSuggestion = ({ image, category, title }: GameSuggestionProps) => (
+  <View style={styles.gameCard}>
+    <Image source={image} style={styles.gameImage} />
+    <Text style={styles.gameCategory}>{category}</Text>
+    <Text style={styles.gameTitle}>{title}</Text>
+  </View>
+);
+
 export default function PlanningScreen({ navigation, route }: Props) {
   const { eventId } = route.params;
-  const { getPolls, voteOnPoll } = useEvents();
-  const polls = getPolls(eventId);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+
+  const selectPollOption = (pollId: string, optionLabel: string) => {
+    setSelectedOptions((current) => ({ ...current, [pollId]: optionLabel }));
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -28,67 +143,58 @@ export default function PlanningScreen({ navigation, route }: Props) {
         showBack
         onBack={() => navigation.goBack()}
       />
-
-      <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.goBack()}>
-          <Text style={styles.tabLabel}>Info</Text>
-        </TouchableOpacity>
-        <View style={[styles.tabItem, styles.activeTabItem]}>
-          <Text style={[styles.tabLabel, styles.activeTabLabel]}>Planowanie</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('Chat', { eventId })}
-        >
-          <Text style={styles.tabLabel}>Czat</Text>
-        </TouchableOpacity>
-      </View>
+      <TabBar
+        navigation={navigation}
+        eventId={eventId}
+        isOrganizer={route.params.isOrganizer}
+      />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {polls.map((poll) => {
-          const totalVotes = poll.options.reduce((sum, o) => sum + o.votes, 0);
-          return (
-            <View key={poll.id} style={styles.pollCard}>
-              <View style={styles.pollHeader}>
-                <Text style={styles.pollTitle}>{poll.title}</Text>
-                <View style={[styles.statusBadge, poll.status === 'active' && styles.activeBadge]}>
-                  <Text style={[styles.statusText, poll.status === 'active' && styles.activeText]}>
-                    {poll.status === 'active' ? 'AKTYWNE' : 'ZAKOŃCZONE'}
-                  </Text>
-                </View>
-              </View>
-              {poll.options.map((option) => {
-                const pct = totalVotes > 0 ? Math.round((option.votes / totalVotes) * 100) : 0;
-                return (
-                  <TouchableOpacity
-                    key={option.label}
-                    style={[styles.voteOption, option.voted && styles.voteOptionVoted]}
-                    onPress={() => {
-                      voteOnPoll(eventId, poll.id, option.label);
-                      logPollVoted(eventId, poll.id);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.voteBar, { width: `${pct}%` as any }]} />
-                    <Text style={styles.voteLabel}>{option.label}</Text>
-                    <Text style={styles.votePct}>{pct}%</Text>
-                  </TouchableOpacity>
-                );
-              })}
-              <Text style={styles.voteFooter}>
-                Oddanych głosów: {totalVotes}
-              </Text>
-            </View>
-          );
-        })}
+        <Image source={planningHero} style={styles.hero} />
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Głosowanie</Text>
+          <Text style={styles.sectionMeta}>2 aktywne ankiety</Text>
+        </View>
+
+        <PollCard
+          id="timing"
+          title="Kiedy zaczynamy?"
+          icon="clock"
+          selectedOption={selectedOptions.timing}
+          onSelect={selectPollOption}
+          options={[
+            { label: '18:00', percent: 65 },
+            { label: '19:30', percent: 35 },
+          ]}
+        />
+
+        <PollCard
+          id="food"
+          title="Gdzie zamawiamy jedzenie?"
+          icon="food"
+          selectedOption={selectedOptions.food}
+          onSelect={selectPollOption}
+          options={[
+            { label: 'Pizza', percent: 65 },
+            { label: 'Sushi', percent: 35 },
+          ]}
+        />
 
         <TouchableOpacity
-          style={styles.counterProposalBtn}
+          style={styles.counterProposal}
           onPress={() => navigation.navigate('CounterProposal', { eventId })}
-          activeOpacity={0.8}
+          activeOpacity={0.75}
         >
-          <Text style={styles.counterProposalText}>+ Dodaj kontrpropozycję</Text>
+          <AppIcon name="plusBlue" size={20} color={Colors.actualMainBlue} />
+          <Text style={styles.counterProposalText}>ZGŁOŚ KONTRPROPOZYCJĘ</Text>
         </TouchableOpacity>
+
+        <Text style={styles.suggestionsTitle}>Sugestie gier</Text>
+        <View style={styles.gamesRow}>
+          <GameSuggestion image={catanImage} category="STRATEGIA" title="Catan: Osadnicy" />
+          <GameSuggestion image={dixitImage} category="IMPREZOWE" title="Dixit: Odyseja" />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -97,123 +203,198 @@ export default function PlanningScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.lightModeMainTheme },
   tabBar: {
-    flexDirection: 'row',
+    marginHorizontal: 28,
+    marginTop: 24,
+    marginBottom: 30,
     borderTopWidth: 2,
     borderBottomWidth: 2,
     borderColor: Colors.secondaryDarkBlue,
-    paddingHorizontal: 4,
-    paddingVertical: 8,
-    gap: 4,
+    flexDirection: 'row',
+    paddingVertical: 6,
   },
   tabItem: {
     flex: 1,
+    minHeight: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
     borderRadius: 4,
   },
-  activeTabItem: { backgroundColor: Colors.navbarFocus },
+  activeTabItem: {
+    backgroundColor: '#DCE4EF',
+  },
   tabLabel: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.base,
+    fontFamily: Fonts.bold,
+    fontSize: 14,
     color: Colors.secondaryDarkBlue,
-    textAlign: 'center',
+    lineHeight: 19,
   },
-  activeTabLabel: { fontFamily: Fonts.bold },
-  content: { padding: 24, gap: 20, paddingBottom: 40 },
+  activeTabLabel: {
+    fontFamily: Fonts.bold,
+  },
+  content: {
+    paddingHorizontal: 28,
+    paddingBottom: 120,
+  },
+  hero: {
+    width: '100%',
+    height: 200,
+    borderRadius: 6,
+    marginBottom: 28,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 22,
+  },
+  sectionTitle: {
+    fontFamily: Fonts.bold,
+    fontSize: 24,
+    color: Colors.black,
+    lineHeight: 31,
+  },
+  sectionMeta: {
+    fontFamily: Fonts.regular,
+    fontSize: 16,
+    color: Colors.graySecondary,
+    lineHeight: 22,
+  },
   pollCard: {
-    backgroundColor: 'rgba(0,82,209,0.17)',
     borderWidth: 2,
-    borderColor: Colors.actualMainBlue,
+    borderColor: Colors.secondaryDarkBlue,
     borderRadius: 4,
-    padding: 16,
-    gap: 12,
+    backgroundColor: Colors.offWhite,
+    paddingHorizontal: 22,
+    paddingTop: 22,
+    paddingBottom: 24,
+    marginBottom: 24,
     shadowColor: Colors.graySecondary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
+    shadowOffset: { width: 4, height: 5 },
+    shadowOpacity: 0.6,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 5,
   },
   pollHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 26,
+  },
+  pollIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 9,
+    backgroundColor: '#D6E6FB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pollTitleBox: {
+    flex: 1,
   },
   pollTitle: {
     fontFamily: Fonts.bold,
-    fontSize: 12,
+    fontSize: 18,
     color: Colors.black,
-    lineHeight: 18,
-    flex: 1,
+    lineHeight: 24,
   },
-  statusBadge: {
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    backgroundColor: Colors.lightGray,
-  },
-  activeBadge: { backgroundColor: 'rgba(0,82,209,0.17)' },
-  statusText: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.xs,
+  pollSubtitle: {
+    fontFamily: Fonts.regular,
+    fontSize: 11,
     color: Colors.mainGraySecondary,
+    lineHeight: 16,
   },
-  activeText: { color: Colors.actualMainBlue },
-  voteOption: {
-    backgroundColor: Colors.offWhite,
-    borderRadius: 8,
-    height: 36,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
+  pollOptions: {
+    gap: 13,
+  },
+  pollOption: {
+    minHeight: 56,
+    borderRadius: 10,
+    backgroundColor: '#E8EEF8',
     overflow: 'hidden',
     position: 'relative',
-    borderWidth: 1,
-    borderColor: 'transparent',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  voteOptionVoted: {
-    borderColor: Colors.actualMainBlue,
-  },
-  voteBar: {
+  pollFill: {
     position: 'absolute',
     left: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: Colors.navbarFocus,
+    backgroundColor: '#D2DCEB',
   },
-  voteLabel: {
-    fontFamily: Fonts.medium,
-    fontSize: 12,
-    color: Colors.black,
-    lineHeight: 18,
-    position: 'absolute',
-    left: 12,
+  pollFillSelected: {
+    backgroundColor: Colors.actualMainBlue,
   },
-  votePct: {
+  pollOptionLabel: {
+    flex: 1,
+    paddingLeft: 16,
+    fontFamily: Fonts.regular,
+    fontSize: 16,
+    color: Colors.graySecondary,
+    zIndex: 1,
+  },
+  pollOptionLabelSelected: {
+    fontFamily: Fonts.bold,
+    color: Colors.white,
+  },
+  pollPercent: {
+    paddingRight: 17,
     fontFamily: Fonts.bold,
     fontSize: 12,
-    color: Colors.black,
-    lineHeight: 18,
-    position: 'absolute',
-    right: 12,
+    color: Colors.graySecondary,
+    zIndex: 1,
   },
-  counterProposalBtn: {
-    borderWidth: 2,
-    borderColor: Colors.actualMainBlue,
-    borderRadius: 8,
-    borderStyle: 'dashed',
-    paddingVertical: 16,
+  counterProposal: {
+    alignSelf: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+    marginTop: 20,
+    marginBottom: 55,
   },
   counterProposalText: {
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.md,
+    fontFamily: Fonts.bold,
+    fontSize: 15,
     color: Colors.actualMainBlue,
+    lineHeight: 20,
   },
-  voteFooter: {
-    fontFamily: Fonts.regular,
-    fontSize: 11,
-    color: Colors.mainGraySecondary,
-    textAlign: 'right',
-    marginTop: 2,
+  suggestionsTitle: {
+    fontFamily: Fonts.bold,
+    fontSize: 20,
+    color: Colors.black,
+    lineHeight: 27,
+    marginBottom: 18,
+  },
+  gamesRow: {
+    flexDirection: 'row',
+    gap: 17,
+  },
+  gameCard: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: Colors.secondaryDarkBlue,
+    borderRadius: 5,
+    backgroundColor: Colors.offWhite,
+    padding: 14,
+  },
+  gameImage: {
+    width: '100%',
+    height: 93,
+    borderRadius: 3,
+    marginBottom: 14,
+  },
+  gameCategory: {
+    fontFamily: Fonts.bold,
+    fontSize: 12,
+    color: Colors.actualMainBlue,
+    lineHeight: 16,
+    letterSpacing: 0.7,
+    marginBottom: 8,
+  },
+  gameTitle: {
+    fontFamily: Fonts.bold,
+    fontSize: 15,
+    color: Colors.black,
+    lineHeight: 20,
   },
 });

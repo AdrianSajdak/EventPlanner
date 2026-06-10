@@ -1,113 +1,135 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  SafeAreaView, KeyboardAvoidingView, Platform, Modal, FlatList, Switch,
+  Image,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors } from '../../theme/colors';
-import { Fonts, FontSizes } from '../../theme/typography';
 import { Navbar } from '../../components/common/Navbar';
-import { Input } from '../../components/common/Input';
-import { Button } from '../../components/common/Button';
+import { AppIcon, AppIconName } from '../../components/common/AppIcon';
 import { EventsStackParamList } from '../../navigation/EventsNavigator';
-import { INVITABLE_FRIENDS } from '../../data/mockFriends';
 import { useEvents } from '../../context/EventsContext';
-import { useFriendLists } from '../../context/FriendsContext';
 import { logEventCreated } from '../../services/analytics';
+import { Colors } from '../../theme/colors';
+import { Fonts } from '../../theme/typography';
+
+const heroImage = require('../../../assets/images/new-event-hero.png');
 
 type Props = {
   navigation: NativeStackNavigationProp<EventsStackParamList, 'NewEvent'>;
 };
 
-type Step = 1 | 2 | 3;
+type EventType = 'cinema' | 'sport' | 'restaurant';
 
-const StepIndicator = ({ current }: { current: Step }) => (
-  <View style={styles.stepRow}>
-    {([1, 2, 3] as Step[]).map((s) => (
-      <View key={s} style={styles.stepItemRow}>
-        <View style={[styles.stepCircle, current >= s && styles.stepCircleActive]}>
-          <Text style={[styles.stepNum, current >= s && styles.stepNumActive]}>{s}</Text>
-        </View>
-        {s < 3 && <View style={[styles.stepLine, current > s && styles.stepLineActive]} />}
-      </View>
-    ))}
+type TypeOption = {
+  key: EventType;
+  label: string;
+  icon: AppIconName;
+};
+
+const typeOptions: TypeOption[] = [
+  { key: 'cinema', label: 'Kino', icon: 'cinema' },
+  { key: 'sport', label: 'Sport', icon: 'sport' },
+  { key: 'restaurant', label: 'Restauracja', icon: 'food' },
+];
+
+const invitedFriends = ['Michał S.', 'Michał S...', 'Michał S'];
+
+const Field = ({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) => (
+  <View style={styles.field}>
+    <Text style={styles.label}>{label}</Text>
+    {children}
+  </View>
+);
+
+const TextField = ({
+  value,
+  onChangeText,
+  placeholder,
+  multiline,
+}: {
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder: string;
+  multiline?: boolean;
+}) => (
+  <TextInput
+    value={value}
+    onChangeText={onChangeText}
+    placeholder={placeholder}
+    placeholderTextColor={Colors.graySecondary}
+    style={[
+      styles.input,
+      value ? styles.inputFilled : styles.inputEmpty,
+      multiline && styles.textArea,
+    ]}
+    multiline={multiline}
+    autoCorrect={false}
+    spellCheck={false}
+  />
+);
+
+const MiniField = ({
+  icon,
+  value,
+}: {
+  icon: AppIconName;
+  value: string;
+}) => (
+  <View style={styles.miniInput}>
+    <AppIcon name={icon} size={18} color={Colors.actualMainBlue} />
+    <Text style={styles.miniInputText}>{value}</Text>
+  </View>
+);
+
+const FriendChip = ({ name }: { name: string }) => (
+  <View style={styles.friendChip}>
+    <View style={styles.friendAvatar}>
+      <Text style={styles.friendAvatarText}>M</Text>
+    </View>
+    <View style={styles.friendChipTextBox}>
+      <Text style={styles.friendName} numberOfLines={1}>{name}</Text>
+      <Text style={styles.friendHandle} numberOfLines={1}>@mich...</Text>
+    </View>
+    <View style={styles.removeFriend}>
+      <Text style={styles.removeFriendText}>×</Text>
+    </View>
   </View>
 );
 
 export default function NewEventScreen({ navigation }: Props) {
   const { addHostedEvent } = useEvents();
-  const { lists } = useFriendLists();
-  const [step, setStep] = useState<Step>(1);
   const [title, setTitle] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
   const [location, setLocation] = useState('');
+  const [date] = useState('12.09.2026');
+  const [time] = useState('19:15');
+  const [eventType, setEventType] = useState<EventType>('cinema');
   const [description, setDescription] = useState('');
-
-  const [participantIds, setParticipantIds] = useState<string[]>([]);
-  const [pickerVisible, setPickerVisible] = useState(false);
-  const [draftIds, setDraftIds] = useState<string[]>([]);
-
-  const [voteOnTime, setVoteOnTime] = useState(false);
-  const [voteOnPlace, setVoteOnPlace] = useState(false);
-  const [counterProposals, setCounterProposals] = useState(false);
-
-  const stepTitles = {
-    1: 'Podstawowe Informacje',
-    2: 'Uczestnicy',
-    3: 'Opcje Planowania',
-  };
-
-  const selectedParticipants = useMemo(
-    () => INVITABLE_FRIENDS.filter((f) => participantIds.includes(f.id)),
-    [participantIds]
-  );
-
-  const openPicker = () => {
-    setDraftIds(participantIds);
-    setPickerVisible(true);
-  };
-
-  const toggleDraft = (id: string) =>
-    setDraftIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-
-  const isListFullySelected = (friendIds: string[]) =>
-    friendIds.length > 0 && friendIds.every((id) => draftIds.includes(id));
-
-  const toggleList = (friendIds: string[]) => {
-    setDraftIds((prev) => {
-      const fullySelected = friendIds.every((id) => prev.includes(id));
-      if (fullySelected) {
-        return prev.filter((id) => !friendIds.includes(id));
-      }
-      const merged = [...prev];
-      friendIds.forEach((id) => {
-        if (!merged.includes(id)) merged.push(id);
-      });
-      return merged;
-    });
-  };
-
-  const confirmPicker = () => {
-    setParticipantIds(draftIds);
-    setPickerVisible(false);
-  };
-
-  const removeParticipant = (id: string) =>
-    setParticipantIds((prev) => prev.filter((x) => x !== id));
 
   const handleCreate = () => {
     addHostedEvent({
-      title,
+      title: title || 'Wieczorne Kino w Plenerze',
       date,
       time,
-      location,
+      location: location || 'Cybermachina',
       description,
-      participantsCount: participantIds.length,
+      participantsCount: invitedFriends.length,
     });
-    logEventCreated({ participants_count: participantIds.length });
+    logEventCreated({ participants_count: invitedFriends.length });
     navigation.goBack();
   };
 
@@ -117,242 +139,99 @@ export default function NewEventScreen({ navigation }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <SafeAreaView style={styles.safe}>
-        <Navbar
-          title="Nowe Wyjście"
-          showBack
-          onBack={() => navigation.goBack()}
-        />
-
+        <Navbar title="Nowe Wyjście" showBack onBack={() => navigation.goBack()} />
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <StepIndicator current={step} />
+          <ImageBackground source={heroImage} style={styles.hero} imageStyle={styles.heroImage} />
 
-          <View style={styles.card}>
-            <Text style={styles.stepTitle}>{stepTitles[step]}</Text>
+          <Field label="Nazwa wydarzenia">
+            <TextField
+              value={title}
+              onChangeText={setTitle}
+              placeholder="np. Wieczorne Kino w Plenerze"
+            />
+          </Field>
 
-            {step === 1 && (
-              <View style={styles.form}>
-                <Input
-                  label="Nazwa wydarzenia"
-                  value={title}
-                  onChangeText={setTitle}
-                  placeholder="np. Wieczór z planszówkami"
-                />
-                <Input
-                  label="Data"
-                  value={date}
-                  onChangeText={setDate}
-                  placeholder="DD.MM.RRRR"
-                />
-                <Input
-                  label="Godzina"
-                  value={time}
-                  onChangeText={setTime}
-                  placeholder="HH:MM"
-                />
-                <Input
-                  label="Lokalizacja"
-                  value={location}
-                  onChangeText={setLocation}
-                  placeholder="np. Cybermachina, Kraków"
-                />
-                <Input
-                  label="Opis (opcjonalnie)"
-                  value={description}
-                  onChangeText={setDescription}
-                  placeholder="Krótki opis wydarzenia..."
-                  multiline
-                />
-              </View>
-            )}
+          <Field label="Lokalizacja">
+            <TextField
+              value={location}
+              onChangeText={setLocation}
+              placeholder="np. Cybermachina"
+            />
+          </Field>
 
-            {step === 2 && (
-              <View style={styles.form}>
-                <Text style={styles.helperText}>
-                  Dodaj znajomych, których chcesz zaprosić na wydarzenie
-                </Text>
-
-                {selectedParticipants.length > 0 && (
-                  <View style={styles.selectedList}>
-                    <Text style={styles.selectedTitle}>
-                      Wybrani uczestnicy ({selectedParticipants.length})
-                    </Text>
-                    {selectedParticipants.map((friend) => (
-                      <View key={friend.id} style={styles.selectedRow}>
-                        <View style={styles.smallAvatar}>
-                          <Text style={styles.smallAvatarInitial}>{friend.name[0]}</Text>
-                        </View>
-                        <Text style={styles.selectedName}>{friend.name}</Text>
-                        <TouchableOpacity
-                          onPress={() => removeParticipant(friend.id)}
-                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        >
-                          <Text style={styles.removeIcon}>×</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ))}
-                  </View>
-                )}
-
-                <TouchableOpacity
-                  style={styles.addFriendBtn}
-                  onPress={openPicker}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.addFriendText}>+ Dodaj uczestników</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {step === 3 && (
-              <View style={styles.form}>
-                <Text style={styles.helperText}>
-                  Ustaw opcje głosowania i planowania dla tego wydarzenia
-                </Text>
-                <View style={styles.optionRow}>
-                  <Text style={styles.optionLabel}>Głosowanie na godzinę</Text>
-                  <Switch
-                    value={voteOnTime}
-                    onValueChange={setVoteOnTime}
-                    trackColor={{ false: Colors.lightGray, true: Colors.actualMainBlue }}
-                    thumbColor={Colors.white}
-                  />
-                </View>
-                <View style={styles.optionRow}>
-                  <Text style={styles.optionLabel}>Głosowanie na miejsce</Text>
-                  <Switch
-                    value={voteOnPlace}
-                    onValueChange={setVoteOnPlace}
-                    trackColor={{ false: Colors.lightGray, true: Colors.actualMainBlue }}
-                    thumbColor={Colors.white}
-                  />
-                </View>
-                <View style={styles.optionRow}>
-                  <Text style={styles.optionLabel}>Kontrpropozycje</Text>
-                  <Switch
-                    value={counterProposals}
-                    onValueChange={setCounterProposals}
-                    trackColor={{ false: Colors.lightGray, true: Colors.actualMainBlue }}
-                    thumbColor={Colors.white}
-                  />
-                </View>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.navButtons}>
-            {step > 1 && (
-              <Button
-                label="Wstecz"
-                variant="secondary"
-                onPress={() => setStep((s) => (s - 1) as Step)}
-                style={styles.navBtn}
-              />
-            )}
-            {step < 3 ? (
-              <Button
-                label="Dalej →"
-                variant="primary"
-                onPress={() => setStep((s) => (s + 1) as Step)}
-                style={styles.navBtn}
-              />
-            ) : (
-              <Button
-                label="Utwórz wydarzenie"
-                variant="primary"
-                onPress={handleCreate}
-                style={styles.navBtn}
-              />
-            )}
-          </View>
-        </ScrollView>
-
-        <Modal
-          visible={pickerVisible}
-          animationType="slide"
-          transparent
-          onRequestClose={() => setPickerVisible(false)}
-        >
-          <View style={styles.modalBackdrop}>
-            <View style={styles.modalCard}>
-              <Text style={styles.modalTitle}>Wybierz uczestników</Text>
-
-              {lists.length > 0 && (
-                <View style={styles.listsBlock}>
-                  <Text style={styles.listsLabel}>Z listy</Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.chipsRow}
-                  >
-                    {lists.map((l) => {
-                      const active = isListFullySelected(l.friendIds);
-                      return (
-                        <TouchableOpacity
-                          key={l.id}
-                          style={[styles.listChip, active && styles.listChipActive]}
-                          onPress={() => toggleList(l.friendIds)}
-                          activeOpacity={0.7}
-                        >
-                          <Text
-                            style={[styles.listChipText, active && styles.listChipTextActive]}
-                          >
-                            {active ? '✓ ' : ''}
-                            {l.name} ({l.friendIds.length})
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
-                </View>
-              )}
-
-              <FlatList
-                data={INVITABLE_FRIENDS}
-                keyExtractor={(item) => item.id}
-                style={styles.modalListFlex}
-                contentContainerStyle={styles.modalList}
-                showsVerticalScrollIndicator
-                renderItem={({ item }) => {
-                  const checked = draftIds.includes(item.id);
-                  return (
-                    <TouchableOpacity
-                      style={styles.friendPickerRow}
-                      onPress={() => toggleDraft(item.id)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.smallAvatar}>
-                        <Text style={styles.smallAvatarInitial}>{item.name[0]}</Text>
-                      </View>
-                      <View style={styles.friendPickerInfo}>
-                        <Text style={styles.selectedName}>{item.name}</Text>
-                        <Text style={styles.friendPickerMeta}>
-                          {item.mutualEvents} wspólnych wydarzeń
-                        </Text>
-                      </View>
-                      <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-                        {checked && <Text style={styles.checkmark}>✓</Text>}
-                      </View>
-                    </TouchableOpacity>
-                  );
-                }}
-              />
-              <View style={styles.modalActions}>
-                <Button
-                  label="Anuluj"
-                  variant="secondary"
-                  onPress={() => setPickerVisible(false)}
-                  style={styles.navBtn}
-                />
-                <Button
-                  label={`Zatwierdź (${draftIds.length})`}
-                  variant="primary"
-                  onPress={confirmPicker}
-                  style={styles.navBtn}
-                />
-              </View>
+          <View style={styles.twoColumn}>
+            <View style={styles.twoColumnItem}>
+              <Field label="Data">
+                <MiniField icon="calendarAlt" value={date} />
+              </Field>
+            </View>
+            <View style={styles.twoColumnItem}>
+              <Field label="Godzina">
+                <MiniField icon="clock" value={time} />
+              </Field>
             </View>
           </View>
-        </Modal>
+
+          <Field label="Typ wyjścia">
+            <View style={styles.typeRow}>
+              {typeOptions.map((option) => {
+                const active = eventType === option.key;
+                return (
+                  <TouchableOpacity
+                    key={option.key}
+                    style={[styles.typePill, active && styles.typePillActive]}
+                    onPress={() => setEventType(option.key)}
+                    activeOpacity={0.75}
+                  >
+                    <AppIcon name={option.icon} size={17} color={Colors.actualMainBlue} />
+                    <Text style={styles.typePillText}>{option.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </Field>
+
+          <View style={styles.inviteHeader}>
+            <Text style={styles.label}>Zaproś znajomych</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('InviteMore', {})}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.seeAll}>+ ZOBACZ WSZYSTKICH</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.inviteBox}>
+            <View style={styles.friendChips}>
+              {invitedFriends.map((name, index) => (
+                <FriendChip key={`${name}-${index}`} name={name} />
+              ))}
+            </View>
+            <TouchableOpacity
+              style={styles.inviteMore}
+              onPress={() => navigation.navigate('InviteMore', {})}
+              activeOpacity={0.75}
+            >
+              <View style={styles.invitePlus}>
+                <AppIcon name="add" size={26} color={Colors.secondaryDarkBlue} />
+              </View>
+              <Text style={styles.inviteMoreText}>Zaproś więcej</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Field label="Opis wydarzenia">
+            <TextField
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Krótki opis tego co planujemy robić..."
+              multiline
+            />
+          </Field>
+
+          <TouchableOpacity style={styles.createButton} onPress={handleCreate} activeOpacity={0.85}>
+            <Text style={styles.createButtonText}>Stwórz Wydarzenie</Text>
+            <AppIcon name="arrowContinue" size={26} color={Colors.white} />
+          </TouchableOpacity>
+        </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
@@ -361,264 +240,239 @@ export default function NewEventScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   safe: { flex: 1, backgroundColor: Colors.lightModeMainTheme },
-  content: { padding: 24, gap: 24, paddingBottom: 40 },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  content: {
+    paddingTop: 16,
+    paddingHorizontal: 28,
+    paddingBottom: 120,
+    gap: 22,
   },
-  stepItemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  hero: {
+    height: 193,
+    overflow: 'hidden',
   },
-  stepCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.lightModeMainTheme,
-    borderWidth: 2,
-    borderColor: Colors.secondaryDarkBlue,
-    alignItems: 'center',
-    justifyContent: 'center',
+  heroImage: {
+    borderRadius: 5,
   },
-  stepCircleActive: {
-    backgroundColor: Colors.secondaryDarkBlue,
+  field: {
+    gap: 10,
   },
-  stepNum: {
+  label: {
     fontFamily: Fonts.bold,
-    fontSize: FontSizes.base,
-    color: Colors.secondaryDarkBlue,
-  },
-  stepNumActive: {
-    color: Colors.white,
-  },
-  stepLine: {
-    width: 60,
-    height: 2,
-    backgroundColor: Colors.lightGray,
-    marginHorizontal: 4,
-  },
-  stepLineActive: {
-    backgroundColor: Colors.secondaryDarkBlue,
-  },
-  card: {
-    backgroundColor: Colors.offWhite,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: Colors.secondaryDarkBlue,
-    padding: 24,
-    gap: 20,
-    shadowColor: Colors.graySecondary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  stepTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.lg,
-    color: Colors.secondaryDarkBlue,
-    lineHeight: 28,
-  },
-  form: { gap: 16 },
-  helperText: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.base,
+    fontSize: 14,
     color: Colors.mainGraySecondary,
     lineHeight: 20,
   },
-  addFriendBtn: {
+  input: {
+    minHeight: 55,
     borderWidth: 2,
-    borderColor: Colors.actualMainBlue,
-    borderRadius: 8,
-    borderStyle: 'dashed',
-    paddingVertical: 16,
+    borderColor: Colors.secondaryDarkBlue,
+    borderRadius: 4,
+    backgroundColor: Colors.offWhite,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    fontFamily: Fonts.regular,
+    fontSize: 16,
+    shadowColor: Colors.graySecondary,
+    shadowOffset: { width: 4, height: 5 },
+    shadowOpacity: 0.7,
+    shadowRadius: 2,
+    elevation: 5,
+  },
+  inputEmpty: {
+    color: Colors.graySecondary,
+  },
+  inputFilled: {
+    color: Colors.black,
+  },
+  textArea: {
+    minHeight: 126,
+    textAlignVertical: 'top',
+  },
+  twoColumn: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  twoColumnItem: {
+    flex: 1,
+  },
+  miniInput: {
+    minHeight: 55,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    borderWidth: 2,
+    borderColor: Colors.secondaryDarkBlue,
+    borderRadius: 4,
+    backgroundColor: Colors.offWhite,
+    paddingHorizontal: 12,
+    shadowColor: Colors.graySecondary,
+    shadowOffset: { width: 4, height: 5 },
+    shadowOpacity: 0.7,
+    shadowRadius: 2,
+    elevation: 5,
   },
-  addFriendText: {
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.md,
-    color: Colors.actualMainBlue,
+  miniInputText: {
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+    color: Colors.graySecondary,
   },
-  optionRow: {
+  typeRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  typePill: {
+    flex: 1,
+    minHeight: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 2,
+    borderColor: Colors.secondaryDarkBlue,
+    borderRadius: 4,
+    backgroundColor: Colors.offWhite,
+    shadowColor: Colors.graySecondary,
+    shadowOffset: { width: 3, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 2,
+    elevation: 4,
+  },
+  typePillActive: {
+    backgroundColor: '#CFE3FF',
+  },
+  typePillText: {
+    fontFamily: Fonts.medium,
+    fontSize: 14,
+    color: Colors.graySecondary,
+  },
+  inviteHeader: {
+    marginBottom: -12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.divider,
-  },
-  optionLabel: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.md,
-    color: Colors.black,
-  },
-  navButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
     gap: 12,
   },
-  navBtn: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-  },
-  selectedList: {
-    gap: 8,
-    paddingVertical: 8,
-  },
-  selectedTitle: {
+  seeAll: {
     fontFamily: Fonts.bold,
-    fontSize: FontSizes.sm,
-    color: Colors.actualMainBlue,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  selectedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: Colors.lightModeMainTheme,
-    borderWidth: 1,
-    borderColor: Colors.secondaryDarkBlue,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  selectedName: {
-    flex: 1,
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.base,
-    color: Colors.black,
-  },
-  smallAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.actualMainBlue,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  smallAvatarInitial: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.base,
-    color: Colors.white,
-  },
-  removeIcon: {
-    fontFamily: Fonts.bold,
-    fontSize: 22,
-    color: Colors.mainGraySecondary,
-    paddingHorizontal: 4,
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalCard: {
-    backgroundColor: Colors.offWhite,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 24,
-    height: '80%',
-  },
-  modalListFlex: {
-    flex: 1,
-  },
-  modalTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.lg,
-    color: Colors.secondaryDarkBlue,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  modalList: {
-    gap: 8,
-    paddingBottom: 16,
-  },
-  friendPickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: Colors.lightModeMainTheme,
-    borderWidth: 1,
-    borderColor: Colors.secondaryDarkBlue,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  friendPickerInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  friendPickerMeta: {
-    fontFamily: Fonts.regular,
     fontSize: 12,
-    color: Colors.mainGraySecondary,
+    color: Colors.actualMainBlue,
+    lineHeight: 17,
   },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
+  inviteBox: {
     borderWidth: 2,
     borderColor: Colors.secondaryDarkBlue,
-    backgroundColor: Colors.white,
+    borderRadius: 4,
+    backgroundColor: '#C9DDF6',
+    padding: 8,
+    gap: 10,
+    shadowColor: Colors.graySecondary,
+    shadowOffset: { width: 4, height: 5 },
+    shadowOpacity: 0.7,
+    shadowRadius: 2,
+    elevation: 5,
+  },
+  friendChips: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  friendChip: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 34,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 6,
+    backgroundColor: '#A9D0FA',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
+  friendAvatar: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.actualMainBlue,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxChecked: {
-    backgroundColor: Colors.actualMainBlue,
-    borderColor: Colors.actualMainBlue,
-  },
-  checkmark: {
+  friendAvatarText: {
     fontFamily: Fonts.bold,
-    fontSize: 14,
+    fontSize: 10,
     color: Colors.white,
-    lineHeight: 16,
   },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.divider,
+  friendChipTextBox: {
+    flex: 1,
+    minWidth: 0,
   },
-  listsBlock: {
-    gap: 6,
-    marginBottom: 12,
-  },
-  listsLabel: {
+  friendName: {
     fontFamily: Fonts.bold,
-    fontSize: FontSizes.sm,
-    color: Colors.actualMainBlue,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontSize: 10,
+    color: Colors.black,
+    lineHeight: 13,
   },
-  chipsRow: {
-    gap: 8,
-    paddingVertical: 2,
-    paddingRight: 8,
+  friendHandle: {
+    fontFamily: Fonts.regular,
+    fontSize: 9,
+    color: Colors.graySecondary,
+    lineHeight: 12,
   },
-  listChip: {
-    borderRadius: 16,
+  removeFriend: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: Colors.lightGray,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeFriendText: {
+    fontFamily: Fonts.bold,
+    fontSize: 12,
+    color: Colors.graySecondary,
+    lineHeight: 14,
+  },
+  inviteMore: {
+    minHeight: 39,
     borderWidth: 1,
+    borderStyle: 'dashed',
     borderColor: Colors.actualMainBlue,
-    backgroundColor: Colors.white,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
   },
-  listChipActive: {
-    backgroundColor: Colors.actualMainBlue,
+  invitePlus: {
+    width: 31,
+    height: 31,
+    borderRadius: 16,
+    backgroundColor: Colors.lightModeMainTheme,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  listChipText: {
-    fontFamily: Fonts.semiBold,
-    fontSize: 13,
-    color: Colors.actualMainBlue,
+  inviteMoreText: {
+    fontFamily: Fonts.bold,
+    fontSize: 12,
+    color: Colors.secondaryDarkBlue,
   },
-  listChipTextActive: {
+  createButton: {
+    height: 62,
+    marginTop: 18,
+    borderRadius: 7,
+    backgroundColor: Colors.purpleAccent,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    shadowColor: Colors.graySecondary,
+    shadowOffset: { width: 4, height: 6 },
+    shadowOpacity: 0.85,
+    shadowRadius: 3,
+    elevation: 7,
+  },
+  createButtonText: {
+    fontFamily: Fonts.bold,
+    fontSize: 18,
     color: Colors.white,
+    lineHeight: 24,
   },
 });
